@@ -1,0 +1,38 @@
+import { type Application, type ApplicationStatus, ALLOWED_TRANSITIONS } from '../domain/application';
+import { StorageService } from './storage';
+
+export const WorkflowService = {
+    canTransition: (currentStatus: ApplicationStatus, targetStatus: ApplicationStatus): boolean => {
+        const allowed = ALLOWED_TRANSITIONS[currentStatus];
+        return allowed.includes(targetStatus);
+    },
+
+    transition: (app: Application, targetStatus: ApplicationStatus, notes?: string): Application => {
+        if (!WorkflowService.canTransition(app.status, targetStatus)) {
+            throw new Error(`Invalid transition from ${app.status} to ${targetStatus}`);
+        }
+
+        const updatedApp: Application = {
+            ...app,
+            status: targetStatus,
+            lastActionDate: new Date().toISOString(),
+            notes: notes ? `${app.notes}\n[${new Date().toLocaleDateString()}] State changed to ${targetStatus}: ${notes}` : app.notes,
+        };
+
+        StorageService.saveApplication(updatedApp);
+        return updatedApp;
+    },
+
+    createApplication: (jobId: string): Application => {
+        const newApp: Application = {
+            id: crypto.randomUUID(),
+            jobId,
+            status: 'Saved',
+            lastActionDate: new Date().toISOString(),
+            notes: '',
+            archived: false,
+        };
+        StorageService.saveApplication(newApp);
+        return newApp;
+    }
+};

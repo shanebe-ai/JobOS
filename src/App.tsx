@@ -1,35 +1,38 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { DashboardLayout } from './ui/layout/DashboardLayout';
+import { JobBoard } from './ui/views/JobBoard';
+import { AddJobView } from './ui/views/AddJobView';
+import { JobDetail } from './ui/views/JobDetail';
+import { StorageService } from './services/storage';
+import './index.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [activeView, setActiveView] = useState<'board' | 'add-job' | 'detail'>('board');
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+
+  useEffect(() => {
+    StorageService.initialize();
+  }, []);
+
+  const handleNavigate = (view: 'board' | 'add-job' | 'detail') => {
+    setActiveView(view);
+    if (view !== 'detail') setSelectedJobId(null);
+  };
+
+  const handleSelectJob = (id: string) => {
+    setSelectedJobId(id);
+    setActiveView('detail');
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <DashboardLayout activeView={activeView} onNavigate={handleNavigate}>
+      {activeView === 'board' && <JobBoard onSelectJob={handleSelectJob} />}
+      {activeView === 'add-job' && <AddJobView onJobAdded={() => handleNavigate('board')} onCancel={() => handleNavigate('board')} />}
+      {activeView === 'detail' && selectedJobId && (
+        <JobDetail jobId={selectedJobId} onBack={() => handleNavigate('board')} />
+      )}
+    </DashboardLayout>
+  );
 }
 
-export default App
+export default App;
