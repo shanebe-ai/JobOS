@@ -4,6 +4,7 @@ import type { Job } from '../../domain/job';
 import type { Application } from '../../domain/application';
 import { getSuggestedAction } from '../../domain/application';
 import { ConfirmationModal } from '../components/ConfirmationModal';
+import { UserProfileModal } from '../components/UserProfileModal';
 
 interface JobBoardProps {
     onSelectJob: (jobId: string) => void;
@@ -32,6 +33,7 @@ export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
     };
 
     const [showResetModal, setShowResetModal] = useState(false);
+    const [showProfileModal, setShowProfileModal] = useState(false);
 
     const handleReset = () => {
         StorageService.clearAll();
@@ -48,15 +50,29 @@ export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
                 onCancel={() => setShowResetModal(false)}
             />
 
+            <UserProfileModal
+                isOpen={showProfileModal}
+                onClose={() => setShowProfileModal(false)}
+            />
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h1 style={{ marginBottom: 0 }}>Your Job Hunt</h1>
-                <button
-                    className="btn btn-outline"
-                    style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
-                    onClick={() => setShowResetModal(true)}
-                >
-                    Reset Demo Data
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        className="btn btn-outline"
+                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
+                        onClick={() => setShowProfileModal(true)}
+                    >
+                        👤 My Profile
+                    </button>
+                    <button
+                        className="btn btn-outline"
+                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
+                        onClick={() => setShowResetModal(true)}
+                    >
+                        Reset Demo Data
+                    </button>
+                </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
                 {jobs.map(job => (

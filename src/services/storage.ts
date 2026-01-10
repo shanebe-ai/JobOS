@@ -1,9 +1,4 @@
-import type { Job } from '../domain/job';
-import type { Application } from '../domain/application';
-import type { Person } from '../domain/person';
-import type { Action } from '../domain/action';
-import type { Engagement } from '../domain/engagement';
-import type { Artifact } from '../domain/artifact';
+import type { UserProfile } from '../domain/user';
 
 const STORAGE_KEYS = {
     JOBS: 'job_os_jobs',
@@ -12,6 +7,7 @@ const STORAGE_KEYS = {
     ACTIONS: 'job_os_actions',
     ENGAGEMENTS: 'job_os_engagements',
     ARTIFACTS: 'job_os_artifacts',
+    USER_PROFILE: 'job_os_user_profile',
 };
 
 // Generic helper to get/set
@@ -94,6 +90,10 @@ export const StorageService = {
             artifacts.push(artifact);
         }
         localStorage.setItem(STORAGE_KEYS.ARTIFACTS, JSON.stringify(artifacts));
+    },
+    deleteArtifact: (id: string) => {
+        const artifacts = get<Artifact>(STORAGE_KEYS.ARTIFACTS).filter(a => a.id !== id);
+        set(STORAGE_KEYS.ARTIFACTS, artifacts);
     },
 
     initialize: () => {
@@ -199,6 +199,15 @@ export const StorageService = {
             localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(seedPeople));
             localStorage.setItem(STORAGE_KEYS.ARTIFACTS, JSON.stringify(seedArtifacts));
         }
+    },
+
+    // User Profile
+    getUserProfile: () => {
+        const data = localStorage.getItem(STORAGE_KEYS.USER_PROFILE);
+        return data ? JSON.parse(data) : null;
+    },
+    saveUserProfile: (profile: UserProfile) => {
+        localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
     },
 
     // Reset
