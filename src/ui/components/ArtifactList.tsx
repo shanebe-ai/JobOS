@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { type Artifact, type ArtifactType } from '../../domain/artifact';
 import { StorageService } from '../../services/storage';
 import { AIService } from '../../services/ai';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface ArtifactListProps {
     jobId?: string;
@@ -14,6 +15,15 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
     const [isAdding, setIsAdding] = useState(false);
     const [analyzingId, setAnalyzingId] = useState<string | null>(null);
     const [analysisResult, setAnalysisResult] = useState<{ id: string, result: string[] } | null>(null);
+    const [artifactToDelete, setArtifactToDelete] = useState<string | null>(null);
+
+    const confirmDelete = () => {
+        if (artifactToDelete) {
+            StorageService.deleteArtifact(artifactToDelete);
+            setArtifactToDelete(null);
+            onUpdate();
+        }
+    };
 
     const [formData, setFormData] = useState<Partial<Artifact>>({
         name: '',
@@ -81,14 +91,55 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
                             <option value="OutreachMessage">Outreach Draft</option>
                         </select>
                     </div>
+
+                    <div style={{ marginBottom: '0.5rem', border: '2px dashed var(--border-color)', padding: '1rem', borderRadius: '6px', textAlign: 'center' }}>
+                        <label style={{ cursor: 'pointer', display: 'block', color: 'var(--primary-color)' }}>
+                            <span>📁 Upload File (PDF, DOCX, TXT)</span>
+                            <input
+                                type="file"
+                                accept=".pdf,.docx,.txt,.md"
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        setFormData(prev => ({ ...prev, name: prev.name || file.name }));
+
+                                        // Simple Text Reader for now
+                                        const reader = new FileReader();
+                                        reader.onload = (ev) => {
+                                            const text = ev.target?.result as string;
+                                            // Heuristic: If it looks binary/messy (start of PDF), warn user to paste text.
+                                            // Real PDF parsing in browser needs heavy libs (pdf.js). 
+                                            // For V1 MVP: Allow file save (metadata) but ask for text content if not .txt/.md
+                                            if (file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+                                                setFormData(prev => ({ ...prev, content: text }));
+                                            } else {
+                                                // For PDF/Doc, just note the filename and Ask user to paste text for AI
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    content: `[Attached File: ${file.name}]\n\n(AI cannot read binary files directly in browser yet. Please copy-paste text content below for analysis.)`
+                                                }));
+                                            }
+                                        };
+                                        reader.readAsText(file);
+                                    }
+                                }}
+                            />
+                        </label>
+                    </div>
+
                     <div style={{ marginBottom: '0.5rem' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Content (Text)</label>
                         <textarea
                             className="input"
-                            placeholder="Paste content here (Text only for V1)..."
-                            style={{ height: '100px' }}
+                            placeholder="Paste content here..."
+                            style={{ height: '100px', fontFamily: 'monospace', fontSize: '0.8rem' }}
                             value={formData.content}
                             onChange={e => setFormData({ ...formData, content: e.target.value })}
                         />
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            * Ideally copy-paste the text from your PDF here so the AI can read it.
+                        </p>
                     </div>
                     <button type="submit" className="btn btn-primary">Save Artifact</button>
                 </form>
@@ -103,16 +154,26 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
                                 <strong>{a.name}</strong> <span className="badge" style={{ background: '#f1f5f9' }}>{a.type} v{a.version}</span>
                                 <p style={{ margin: '0.25rem 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{new Date(a.createdDate).toLocaleDateString()}</p>
                             </div>
-                            {a.type === 'Resume' && jobDescription && (
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                {a.type === 'Resume' && jobDescription && (
+                                    <button
+                                        className="btn btn-outline"
+                                        style={{ fontSize: '0.75rem' }}
+                                        onClick={() => handleAnalyze(a)}
+                                        disabled={!!analyzingId}
+                                    >
+                                        {analyzingId === a.id ? 'Analyzing...' : 'Analyze Match'}
+                                    </button>
+                                )}
                                 <button
-                                    className="btn btn-outline"
-                                    style={{ fontSize: '0.75rem' }}
-                                    onClick={() => handleAnalyze(a)}
-                                    disabled={!!analyzingId}
+                                    className="btn btn-icon danger"
+                                    style={{ color: 'var(--error-color)', border: 'none', background: 'none', cursor: 'pointer', padding: '0.25rem', marginLeft: '0.5rem' }}
+                                    onClick={() => setArtifactToDelete(a.id)}
+                                    title="Delete Artifact"
                                 >
-                                    {analyzingId === a.id ? 'Analyzing...' : 'Analyze Match'}
+                                    🗑️
                                 </button>
-                            )}
+                            </div>
                         </div>
 
                         {/* Analysis Result Display */}
@@ -135,6 +196,14 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
                     </div>
                 ))}
             </div>
+
+            <ConfirmationModal
+                isOpen={!!artifactToDelete}
+                title="Delete Artifact"
+                message="Are you sure you want to delete this file? This action cannot be undone."
+                onConfirm={confirmDelete}
+                onCancel={() => setArtifactToDelete(null)}
+            />
         </div>
     );
 };
