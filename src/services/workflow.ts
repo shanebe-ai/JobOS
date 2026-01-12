@@ -1,4 +1,5 @@
 import { type Application, type ApplicationStatus, ALLOWED_TRANSITIONS } from '../domain/application';
+import type { Engagement } from '../domain/engagement';
 import { StorageService } from './storage';
 
 export const WorkflowService = {
@@ -18,6 +19,17 @@ export const WorkflowService = {
             lastActionDate: new Date().toISOString(),
             notes: notes ? `${app.notes}\n[${new Date().toLocaleDateString()}] State changed to ${targetStatus}: ${notes}` : app.notes,
         };
+
+        // Auto-Log Engagement
+        const engagement: Engagement = {
+            id: crypto.randomUUID(),
+            applicationId: app.jobId, // Use jobId so it shows up in the Job log
+            type: 'StatusChange',
+            platform: 'Other', // System event
+            description: `Status changed from ${app.status} to ${targetStatus}`,
+            date: new Date().toISOString()
+        };
+        StorageService.saveEngagement(engagement);
 
         StorageService.saveApplication(updatedApp);
         return updatedApp;

@@ -64,6 +64,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                 const updatedApp = WorkflowService.transition(app, newStatus);
                 setApp(updatedApp);
                 setSuggestions(RecommendationService.getSuggestedActions(updatedApp)); // Refresh suggestions
+                refreshData(); // Refresh engagements and other data to reflect the change
             } catch (e) {
                 alert(e);
             }

@@ -144,6 +144,16 @@ export const StorageService = {
                     source: 'Hacker News',
                     description: 'Leading the design system team. Heavy focus on a11y and performance.',
                     dateAdded: new Date().toISOString()
+                },
+                {
+                    id: 'job-4',
+                    title: 'Product Manager',
+                    company: 'ScaleUp SaaS',
+                    location: 'Remote',
+                    isRemote: true,
+                    source: 'LinkedIn',
+                    description: 'Looking for a PM to own the growth funnel.',
+                    dateAdded: new Date(Date.now() - 8 * 86400000).toISOString()
                 }
             ];
 
@@ -170,6 +180,14 @@ export const StorageService = {
                     status: 'Saved',
                     notes: 'Need to update portfolio before applying.',
                     lastActionDate: new Date().toISOString(),
+                    archived: false
+                },
+                {
+                    id: 'app-4',
+                    jobId: 'job-4',
+                    status: 'Applied', // Stalled state
+                    notes: 'Applied last week. Crickets so far.',
+                    lastActionDate: new Date(Date.now() - 8 * 86400000).toISOString(),
                     archived: false
                 }
             ];

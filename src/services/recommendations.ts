@@ -5,18 +5,24 @@ export const RecommendationService = {
     getSuggestedActions: (app: Application): Action[] => {
         const suggestions: Action[] = [];
 
+        const lastAction = new Date(app.lastActionDate);
+        const diffTime = Math.abs(new Date().getTime() - lastAction.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const dateStr = lastAction.toLocaleDateString();
 
         // Rule: Identify Stalled Applications
         // (This logic mirrors the domain rule but generates a concrete Action)
 
-
-
         if (app.status === 'Applied') {
-            suggestions.push(createSuggestion(app.id, 'FollowUp', 'Follow up on application', 'It has been a few days. Consider a light follow-up.', 'Medium'));
+            if (diffDays > 3) {
+                suggestions.push(createSuggestion(app.id, 'FollowUp', 'Follow up on application', `It has been ${diffDays} days since you applied (${dateStr}). Consider a light follow-up.`, 'Medium'));
+            }
         }
 
         if (app.status === 'OutreachStarted') {
-            suggestions.push(createSuggestion(app.id, 'FollowUp', 'Follow up on outreach', 'No reply to your outreach yet? a polite bump might help.', 'High'));
+            if (diffDays > 3) {
+                suggestions.push(createSuggestion(app.id, 'FollowUp', 'Follow up on outreach', `No reply since ${dateStr}? A polite bump might help.`, 'High'));
+            }
         }
 
         if (app.status === 'Saved') {

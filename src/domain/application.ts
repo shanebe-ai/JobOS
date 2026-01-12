@@ -37,7 +37,7 @@ export const isStalled = (app: Application, daysThreshold: number = 7): boolean 
 };
 
 export const getSuggestedAction = (app: Application): string => {
-    if (isStalled(app)) return 'Revive?'; // Stalled takes precedence
+    if (isStalled(app)) return 'Follow Up'; // Stalled takes precedence
 
     switch (app.status) {
         case 'Saved': return 'Apply Now';
