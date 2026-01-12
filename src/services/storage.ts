@@ -1,4 +1,10 @@
 import type { UserProfile } from '../domain/user';
+import type { Job } from '../domain/job';
+import type { Application } from '../domain/application';
+import type { Person } from '../domain/person';
+import type { Action } from '../domain/action';
+import type { Engagement } from '../domain/engagement';
+import type { Artifact } from '../domain/artifact';
 
 const STORAGE_KEYS = {
     JOBS: 'job_os_jobs',
