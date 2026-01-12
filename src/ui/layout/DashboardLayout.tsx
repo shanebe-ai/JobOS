@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface DashboardLayoutProps {
-    activeView: 'board' | 'add-job' | 'detail';
-    onNavigate: (view: 'board' | 'add-job' | 'detail') => void;
+    activeView: 'board' | 'add-job' | 'detail' | 'routine';
+    onNavigate: (view: 'board' | 'add-job' | 'detail' | 'routine') => void;
     children: React.ReactNode;
 }
 
@@ -25,6 +25,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
                         onClick={() => onNavigate('add-job')}
                     >
                         + Add Job
+                    </button>
+                    <button
+                        className={`btn ${activeView === 'routine' ? 'btn-primary' : 'btn-outline'}`}
+                        style={{ justifyContent: 'flex-start', border: 'none' }}
+                        onClick={() => onNavigate('routine')}
+                    >
+                        My Routine
                     </button>
                 </nav>
             </aside>

@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
     ENGAGEMENTS: 'job_os_engagements',
     ARTIFACTS: 'job_os_artifacts',
     USER_PROFILE: 'job_os_user_profile',
+    SUGGESTIONS: 'job_os_suggestions',
 };
 
 // Generic helper to get/set
@@ -95,6 +96,21 @@ export const StorageService = {
         const artifacts = get<Artifact>(STORAGE_KEYS.ARTIFACTS).filter(a => a.id !== id);
         set(STORAGE_KEYS.ARTIFACTS, artifacts);
     },
+
+    // Suggestions
+    getSuggestions: () => get<any>(STORAGE_KEYS.SUGGESTIONS), // Using 'any' to avoid import cycle if unrelated, but better to import type
+    saveSuggestion: (suggestion: any) => {
+        const suggestions = get<any>(STORAGE_KEYS.SUGGESTIONS);
+        const index = suggestions.findIndex(s => s.id === suggestion.id);
+        if (index >= 0) suggestions[index] = suggestion;
+        else suggestions.push(suggestion);
+        set(STORAGE_KEYS.SUGGESTIONS, suggestions);
+    },
+    deleteSuggestion: (id: string) => {
+        const suggestions = get<any>(STORAGE_KEYS.SUGGESTIONS).filter(s => s.id !== id);
+        set(STORAGE_KEYS.SUGGESTIONS, suggestions);
+    },
+
 
     initialize: () => {
         if (!localStorage.getItem(STORAGE_KEYS.JOBS)) {
@@ -194,10 +210,34 @@ export const StorageService = {
                 }
             ];
 
+            const seedSuggestions = [
+                {
+                    id: 'sugg-1',
+                    title: 'Publish LinkedIn Content',
+                    description: 'Share a recent learning or project update.',
+                    frequency: 'Weekly',
+                    nextDueDate: new Date().toISOString(),
+                    isActive: true,
+                    history: [],
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'sugg-2',
+                    title: 'Read Tech News',
+                    description: 'Spend 15 mins reading HN or TechCrunch.',
+                    frequency: 'Daily',
+                    nextDueDate: new Date().toISOString(),
+                    isActive: true,
+                    history: [],
+                    createdAt: new Date().toISOString()
+                }
+            ];
+
             localStorage.setItem(STORAGE_KEYS.JOBS, JSON.stringify(seedJobs));
             localStorage.setItem(STORAGE_KEYS.APPLICATIONS, JSON.stringify(seedApps));
             localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(seedPeople));
             localStorage.setItem(STORAGE_KEYS.ARTIFACTS, JSON.stringify(seedArtifacts));
+            localStorage.setItem(STORAGE_KEYS.SUGGESTIONS, JSON.stringify(seedSuggestions));
         }
     },
 
