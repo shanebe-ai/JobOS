@@ -10,7 +10,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
     return (
         <div className="layout">
             <aside className="sidebar">
-                <h2 style={{ marginBottom: '2rem' }}>Job OS</h2>
+                <h2 style={{ marginBottom: '2rem' }}>JobOS</h2>
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <button
                         className={`btn ${activeView === 'board' ? 'btn-primary' : 'btn-outline'}`}
