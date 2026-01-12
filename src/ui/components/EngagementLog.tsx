@@ -118,7 +118,10 @@ export const EngagementLog: React.FC<EngagementLogProps> = ({ jobId, engagements
                 {relevantEngagements.map(e => (
                     <div key={e.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--border-color)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <strong>{e.type} on {e.platform} {getPersonName(e.personId) && <span>with {getPersonName(e.personId)}</span>}</strong>
+                            <strong>
+                                {e.type === 'StatusChange' ? '🔄 Status Update' : `${e.type} on ${e.platform}`}
+                                {getPersonName(e.personId) && <span> with {getPersonName(e.personId)}</span>}
+                            </strong>
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{new Date(e.date).toLocaleDateString()}</span>
                         </div>
                         <p style={{ margin: '0.25rem 0' }}>{e.description}</p>

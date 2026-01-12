@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StorageService } from '../../services/storage';
 import { WorkflowService } from '../../services/workflow';
+import { ExtractorService } from '../../services/extractor';
 import type { Job } from '../../domain/job';
 
 interface AddJobViewProps {
@@ -9,6 +10,8 @@ interface AddJobViewProps {
 }
 
 export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) => {
+    const [pasteUrl, setPasteUrl] = useState('');
+    const [isExtracting, setIsExtracting] = useState(false);
     const [formData, setFormData] = useState<Partial<Job>>({
         title: '',
         company: '',
@@ -17,6 +20,25 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
         source: '',
         description: '',
     });
+
+    const handleMagicPaste = async () => {
+        if (!pasteUrl) return;
+        setIsExtracting(true);
+        try {
+            const extracted = await ExtractorService.extractJobDetails(pasteUrl);
+            setFormData(prev => ({
+                ...prev,
+                ...extracted,
+                // prioritize extracted but don't overwrite if user typed something specific? 
+                // actually, magic paste usually implies "I want to fill from this", so overwrite empty or even existing is safer for "Reset" feeling.
+                // Let's merge safely.
+            }));
+        } catch (error) {
+            console.error("Extraction failed", error);
+        } finally {
+            setIsExtracting(false);
+        }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,6 +64,33 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
     return (
         <div className="card" style={{ maxWidth: '600px', margin: '0 auto' }}>
             <h1>Add New Job</h1>
+
+            {/* Magic Paste Section */}
+            <div style={{ background: '#f0f9ff', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #bae6fd' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#0369a1' }}>✨ Magic Paste (Smart Fill)</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input
+                        className="input"
+                        placeholder="Paste LinkedIn/Indeed URL here..."
+                        value={pasteUrl}
+                        onChange={e => setPasteUrl(e.target.value)}
+                        style={{ marginBottom: 0 }}
+                    />
+                    <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={handleMagicPaste}
+                        disabled={isExtracting || !pasteUrl}
+                        style={{ minWidth: '100px' }}
+                    >
+                        {isExtracting ? 'Thinking...' : 'Auto-Fill'}
+                    </button>
+                </div>
+                <small style={{ color: '#0369a1', display: 'block', marginTop: '0.5rem' }}>
+                    * Pro Tip: Try <code>demo-job</code> to see it in action!
+                </small>
+            </div>
+
             <form onSubmit={handleSubmit}>
                 <div>
                     <label>Job Title</label>

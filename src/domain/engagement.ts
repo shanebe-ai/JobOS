@@ -3,7 +3,8 @@ export type EngagementType =
     | 'Comment'
     | 'Share'
     | 'Post'
-    | 'Connect';
+    | 'Connect'
+    | 'StatusChange';
 
 export interface Engagement {
     id: string;
