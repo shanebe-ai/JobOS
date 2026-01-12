@@ -5,6 +5,7 @@ import type { Application } from '../../domain/application';
 import { getSuggestedAction } from '../../domain/application';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { UserProfileModal } from '../components/UserProfileModal';
+import { SuggestionList } from '../components/SuggestionList';
 
 interface JobBoardProps {
     onSelectJob: (jobId: string) => void;
@@ -74,26 +75,36 @@ export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
                     </button>
                 </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
-                {jobs.map(job => (
-                    <div key={job.id} className="card" onClick={() => onSelectJob(job.id)} style={{ cursor: 'pointer' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '0.5rem' }}>
-                            <h3 style={{ marginTop: 0 }}>{job.title}</h3>
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                <span className="badge" style={{ background: '#fee2e2', color: '#991b1b' }}>{getAction(job.id)}</span>
-                                <span className="badge" style={{ background: '#e2e8f0', color: '#1e293b' }}>{getStatus(job.id)}</span>
+
+            <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+                <div style={{ flex: 3 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+                        {jobs.map(job => (
+                            <div key={job.id} className="card" onClick={() => onSelectJob(job.id)} style={{ cursor: 'pointer' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    <h3 style={{ marginTop: 0 }}>{job.title}</h3>
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        <span className="badge" style={{ background: '#fee2e2', color: '#991b1b' }}>{getAction(job.id)}</span>
+                                        <span className="badge" style={{ background: '#e2e8f0', color: '#1e293b' }}>{getStatus(job.id)}</span>
+                                    </div>
+                                </div>
+                                <p style={{ color: 'var(--text-secondary)' }}>{job.company}</p>
+                                <p style={{ fontSize: '0.875rem' }}>📍 {job.location} ({job.isRemote ? 'Remote' : 'On-site'})</p>
                             </div>
-                        </div>
-                        <p style={{ color: 'var(--text-secondary)' }}>{job.company}</p>
-                        <p style={{ fontSize: '0.875rem' }}>📍 {job.location} ({job.isRemote ? 'Remote' : 'On-site'})</p>
+                        ))}
                     </div>
-                ))}
-            </div>
-            {jobs.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                    No jobs being tracked yet. Start by adding one!
+                    {jobs.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                            No jobs being tracked yet. Start by adding one!
+                        </div>
+                    )}
                 </div>
-            )}
+
+                <div style={{ flex: 1, minWidth: '300px' }}>
+                    <SuggestionList />
+                </div>
+            </div>
         </div>
     );
 };
+

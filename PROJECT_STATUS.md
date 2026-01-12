@@ -27,6 +27,12 @@ The application is functional as a local-first application tracker. It allows us
 - [ ] **STAR Story Bank:** A dedicated section to write and tag stories for behavioral questions.
 - [ ] **Company Research Dossier:** Structured notes for company research (Mission, Values, Recent News).
 
+### 5. 🔌 Automated Job Ingestion
+*Minimize data entry, maximize analysis.*
+- [ ] **Chrome Extension:** A browser extension to "clip" job details directly from LinkedIn/Indeed/Greenhouse into JobOS.
+- [ ] **Smart URL Paste:** Paste a job link, and let the Copilot attempt to scrape OG tags or use an LLM extraction layer to fill details.
+- [ ] **Email Parsing:** (Long-term) Forward application confirmations to a specific address to auto-create "Applied" records.
+
 ## 🏗️ Technical Health
 - **Testing:** Basic setup with Vitest. Needs higher coverage for core domain logic.
 - **CI/CD:** Basic GitHub Actions workflow needed for automated checking.
