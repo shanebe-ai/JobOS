@@ -1,8 +1,10 @@
 # JobOS
 
-**Your Personal AI-Powered Job Search Operating System**
+**Your Personal AI-Powered Workspace for the "Job" of Finding a Job.**
 
-JobOS is a modern, privacy-focused application designed to streamline your job search. It replaces messy spreadsheets with a dedicated "Operating System" for managing applications, tracking networking efforts, and leveraging AI to land your next role.
+Finding a new role isn't just a task—it's a full-time job. **JobOS** provides the professional-grade tools you need to manage it like one.
+
+We replace the chaos of spreadsheets and disparate notes with a unified "Operating System" designed to manage your pipeline, track your professional network, and leverage AI to maximize your productivity. Treat your search with the seriousness it deserves.
 
 ## 🚀 Features
 
