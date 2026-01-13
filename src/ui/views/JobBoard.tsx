@@ -7,6 +7,7 @@ import { getSuggestedAction } from '../../domain/application';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { UserProfileModal } from '../components/UserProfileModal';
 import { SuggestionList } from '../components/SuggestionList';
+import { SettingsModal } from '../components/SettingsModal';
 
 interface JobBoardProps {
     onSelectJob: (jobId: string) => void;
@@ -30,14 +31,13 @@ export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
 
     const getAction = (jobId: string) => {
         const app = applications.find(a => a.jobId === jobId);
-        // Create a temporary "virtual" application for Saved jobs if one doesn't exist yet
-        // This ensures they get the "Apply Now" suggestion
         const effectiveApp = app || { status: 'Saved' } as Application;
         return getSuggestedAction(effectiveApp);
     };
 
     const [showResetModal, setShowResetModal] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
 
     const handleReset = () => {
         StorageService.clearAll();
@@ -59,9 +59,21 @@ export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
                 onClose={() => setShowProfileModal(false)}
             />
 
+            <SettingsModal
+                isOpen={showSettingsModal}
+                onClose={() => setShowSettingsModal(false)}
+            />
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h1 style={{ marginBottom: 0 }}>Your Job Hunt</h1>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        className="btn btn-outline"
+                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
+                        onClick={() => setShowSettingsModal(true)}
+                    >
+                        ⚙️ Settings
+                    </button>
                     <button
                         className="btn btn-outline"
                         style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}

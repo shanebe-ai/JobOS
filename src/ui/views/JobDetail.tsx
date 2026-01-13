@@ -13,6 +13,7 @@ import { ContactList } from '../components/ContactList';
 import { ArtifactList } from '../components/ArtifactList';
 import { DraftMessageModal } from '../components/DraftMessageModal';
 import { ConfirmationModal } from '../components/ConfirmationModal';
+import { ResumeAnalyst } from '../components/ResumeAnalyst';
 import type { OutreachDraftContext } from '../../domain/ai';
 
 interface JobDetailProps {
@@ -140,7 +141,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                 </div>
 
                 <div style={{ flex: 1 }}>
-                    <h3>Suggested Actions</h3>
+                    <h3 style={{ marginTop: 0 }}>Suggested Actions</h3>
                     {suggestions.length === 0 && <p className="text-secondary">No urgent actions.</p>}
                     {suggestions.map(action => (
                         <div key={action.id} className="card" style={{ borderLeft: '4px solid var(--primary-color)' }}>
@@ -174,6 +175,10 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                             </div>
                         </div>
                     ))}
+
+                    <div style={{ marginTop: '2rem' }}>
+                        <ResumeAnalyst jobDescription={job.description} artifacts={artifacts} />
+                    </div>
                 </div>
             </div>
 
