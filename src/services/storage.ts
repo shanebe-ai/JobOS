@@ -277,5 +277,14 @@ export const StorageService = {
     // Reset
     clearAll: () => {
         Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+    },
+
+    // Settings (API Keys, etc)
+    getSettings: () => {
+        const data = localStorage.getItem('job_os_settings');
+        return data ? JSON.parse(data) : { aiProvider: 'gemini', apiKey: '', model: 'gemini-1.5-flash' };
+    },
+    saveSettings: (settings: { aiProvider: string; apiKey: string; model?: string }) => {
+        localStorage.setItem('job_os_settings', JSON.stringify(settings));
     }
 };

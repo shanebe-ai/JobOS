@@ -11,6 +11,9 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "mammoth": "^1.11.0",
+    "pdfjs-dist": "^5.4.530",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

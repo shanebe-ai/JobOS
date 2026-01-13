@@ -9,8 +9,11 @@ The application is functional as a local-first application tracker. It allows us
 
 ### 1. 🧠 Intelligence Layer (The "Copilot")
 *Turn the tool from a passive record-keeper into an active assistant.*
-- [ ] **Real AI Integration:** Connect mock services to a real LLM Provider (OpenAI/Gemini).
-- [ ] **Resume Analyst:** Implement the "Resume vs. Job Description" gap analysis.
+- [x] **Real AI Integration:** Connect mock services to a real LLM Provider (Google Gemini).
+- [x] **Resume Analyst:** Implement the "Resume vs. Job Description" gap analysis.
+- [x] **Smart File Extraction:** Direct support for PDF and Word document text extraction.
+- [x] **Magic Paste:** Uses AI to extract structured job data from messy text.
+- [ ] **Smart Email Drafter:** Generate outreach emails and cover letters based on the job context.
 
 ### 2. 🛡️ Data Resilience (The "Filing Cabinet")
 *Your work is valuable; losing it is not an option.*
@@ -30,7 +33,7 @@ The application is functional as a local-first application tracker. It allows us
 ### 5. 🔌 Automated Job Ingestion
 *Minimize data entry, maximize analysis.*
 - [ ] **Chrome Extension:** A browser extension to "clip" job details directly from LinkedIn/Indeed/Greenhouse into JobOS.
-- [ ] **Smart URL Paste:** Paste a job link, and let the Copilot attempt to scrape OG tags or use an LLM extraction layer to fill details.
+- [x] **Smart URL Paste:** (Implemented as Magic Paste) Paste a job link or text, and let the Copilot fill details.
 - [ ] **Email Parsing:** (Long-term) Forward application confirmations to a specific address to auto-create "Applied" records.
 
 ## 🏗️ Technical Health

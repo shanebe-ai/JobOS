@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { type Artifact, type ArtifactType } from '../../domain/artifact';
 import { StorageService } from '../../services/storage';
-import { AIService } from '../../services/ai';
+import { FileExtractionService } from '../../services/fileExtraction';
 import { ConfirmationModal } from './ConfirmationModal';
 
 interface ArtifactListProps {
@@ -13,9 +13,8 @@ interface ArtifactListProps {
 
 export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, onUpdate, jobDescription }) => {
     const [isAdding, setIsAdding] = useState(false);
-    const [analyzingId, setAnalyzingId] = useState<string | null>(null);
-    const [analysisResult, setAnalysisResult] = useState<{ id: string, result: string[] } | null>(null);
     const [artifactToDelete, setArtifactToDelete] = useState<string | null>(null);
+    const [isExtracting, setIsExtracting] = useState(false);
 
     const confirmDelete = () => {
         if (artifactToDelete) {
@@ -53,17 +52,6 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
         onUpdate();
     };
 
-    const handleAnalyze = async (artifact: Artifact) => {
-        if (!jobDescription) return;
-        setAnalyzingId(artifact.id);
-        try {
-            const response = await AIService.analyzeResume(jobDescription, artifact.content);
-            setAnalysisResult({ id: artifact.id, result: response.data });
-        } finally {
-            setAnalyzingId(null);
-        }
-    };
-
     const relevantArtifacts = jobId
         ? artifacts.filter(a => a.applicationId === jobId)
         : artifacts;
@@ -94,34 +82,32 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
 
                     <div style={{ marginBottom: '0.5rem', border: '2px dashed var(--border-color)', padding: '1rem', borderRadius: '6px', textAlign: 'center' }}>
                         <label style={{ cursor: 'pointer', display: 'block', color: 'var(--primary-color)' }}>
-                            <span>📁 Upload File (PDF, DOCX, TXT)</span>
+                            <span>
+                                {isExtracting ? '⏳ Extracting text...' : '📁 Upload File (PDF, DOCX, TXT)'}
+                            </span>
                             <input
                                 type="file"
                                 accept=".pdf,.docx,.txt,.md"
                                 style={{ display: 'none' }}
-                                onChange={(e) => {
+                                disabled={isExtracting}
+                                onChange={async (e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
+                                        setIsExtracting(true);
                                         setFormData(prev => ({ ...prev, name: prev.name || file.name }));
 
-                                        // Simple Text Reader for now
-                                        const reader = new FileReader();
-                                        reader.onload = (ev) => {
-                                            const text = ev.target?.result as string;
-                                            // Heuristic: If it looks binary/messy (start of PDF), warn user to paste text.
-                                            // Real PDF parsing in browser needs heavy libs (pdf.js). 
-                                            // For V1 MVP: Allow file save (metadata) but ask for text content if not .txt/.md
-                                            if (file.name.endsWith('.txt') || file.name.endsWith('.md')) {
-                                                setFormData(prev => ({ ...prev, content: text }));
-                                            } else {
-                                                // For PDF/Doc, just note the filename and Ask user to paste text for AI
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    content: `[Attached File: ${file.name}]\n\n(AI cannot read binary files directly in browser yet. Please copy-paste text content below for analysis.)`
-                                                }));
-                                            }
-                                        };
-                                        reader.readAsText(file);
+                                        try {
+                                            const text = await FileExtractionService.extractText(file);
+                                            setFormData(prev => ({ ...prev, content: text }));
+                                        } catch (err: any) {
+                                            alert(`Failed to read file: ${err.message}`);
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                content: `[Attached File: ${file.name}]\n\n(Error reading content: ${err.message})`
+                                            }));
+                                        } finally {
+                                            setIsExtracting(false);
+                                        }
                                     }
                                 }}
                             />
@@ -129,19 +115,20 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
                     </div>
 
                     <div style={{ marginBottom: '0.5rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Content (Text)</label>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Content (Text used for AI)</label>
                         <textarea
                             className="input"
-                            placeholder="Paste content here..."
-                            style={{ height: '100px', fontFamily: 'monospace', fontSize: '0.8rem' }}
+                            placeholder={isExtracting ? "Extracting text from document..." : "Paste content here..."}
+                            style={{ height: '100px', fontFamily: 'monospace', fontSize: '0.8rem', opacity: isExtracting ? 0.5 : 1 }}
                             value={formData.content}
                             onChange={e => setFormData({ ...formData, content: e.target.value })}
+                            disabled={isExtracting}
                         />
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            * Ideally copy-paste the text from your PDF here so the AI can read it.
+                            * Content is automatically extracted from your file so the AI can read it.
                         </p>
                     </div>
-                    <button type="submit" className="btn btn-primary">Save Artifact</button>
+                    <button type="submit" className="btn btn-primary" disabled={isExtracting}>Save Artifact</button>
                 </form>
             )}
 
@@ -155,16 +142,6 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
                                 <p style={{ margin: '0.25rem 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{new Date(a.createdDate).toLocaleDateString()}</p>
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                {a.type === 'Resume' && jobDescription && (
-                                    <button
-                                        className="btn btn-outline"
-                                        style={{ fontSize: '0.75rem' }}
-                                        onClick={() => handleAnalyze(a)}
-                                        disabled={!!analyzingId}
-                                    >
-                                        {analyzingId === a.id ? 'Analyzing...' : 'Analyze Match'}
-                                    </button>
-                                )}
                                 <button
                                     className="btn btn-icon danger"
                                     style={{ color: 'var(--error-color)', border: 'none', background: 'none', cursor: 'pointer', padding: '0.25rem', marginLeft: '0.5rem' }}
@@ -175,24 +152,6 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
                                 </button>
                             </div>
                         </div>
-
-                        {/* Analysis Result Display */}
-                        {analysisResult?.id === a.id && (
-                            <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#ecfdf5', borderRadius: '4px' }}>
-                                <strong>AI Suggestions:</strong>
-                                <ul style={{ margin: '0.5rem 0', paddingLeft: '1.5rem', fontSize: '0.875rem' }}>
-                                    {analysisResult.result.map((r, i) => (
-                                        <li key={i}>{r}</li>
-                                    ))}
-                                </ul>
-                                <button
-                                    style={{ border: 'none', background: 'none', color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}
-                                    onClick={() => setAnalysisResult(null)}
-                                >
-                                    Dismiss
-                                </button>
-                            </div>
-                        )}
                     </div>
                 ))}
             </div>

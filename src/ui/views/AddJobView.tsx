@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StorageService } from '../../services/storage';
 import { WorkflowService } from '../../services/workflow';
 import { ExtractorService } from '../../services/extractor';
+import { GoogleGeminiProvider } from '../../services/ai/providers/gemini';
 import type { Job } from '../../domain/job';
 
 interface AddJobViewProps {
@@ -25,16 +26,44 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
         if (!pasteUrl) return;
         setIsExtracting(true);
         try {
+            // 1. Try AI Extraction if API Key is configured
+            const settings = StorageService.getSettings();
+            if (settings.apiKey) {
+                try {
+                    const provider = new GoogleGeminiProvider(settings.apiKey, settings.model);
+                    console.log('Attempting AI extraction...');
+                    const aiDetails = await provider.extractJobDetails(pasteUrl);
+
+                    if (aiDetails.title || aiDetails.company) {
+                        setFormData(prev => ({
+                            ...prev,
+                            title: aiDetails.title || prev.title,
+                            company: aiDetails.company || prev.company,
+                            location: aiDetails.location || prev.location,
+                            description: aiDetails.description || pasteUrl,
+                            // Use simple heuristic for remote validation if strict boolean needed, 
+                            // or just trust user to toggle. 
+                            // For now, if location says 'Remote', check it.
+                            isRemote: aiDetails.location?.toLowerCase().includes('remote') || prev.isRemote,
+                        }));
+                        setIsExtracting(false);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('AI Extraction failed, falling back to regex:', err);
+                }
+            }
+
+            // 2. Fallback to Regex / Basic Scraper
             const extracted = await ExtractorService.extractJobDetails(pasteUrl);
             setFormData(prev => ({
                 ...prev,
                 ...extracted,
-                // prioritize extracted but don't overwrite if user typed something specific? 
-                // actually, magic paste usually implies "I want to fill from this", so overwrite empty or even existing is safer for "Reset" feeling.
-                // Let's merge safely.
             }));
         } catch (error) {
             console.error("Extraction failed", error);
+            // Even if extraction fails, at least put the text in description
+            setFormData(prev => ({ ...prev, description: pasteUrl }));
         } finally {
             setIsExtracting(false);
         }
@@ -53,7 +82,7 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
             source: formData.source || '',
             description: formData.description || '',
             dateAdded: new Date().toISOString(),
-            ...formData as any // Safety cast for optional fields not yet in partial
+            ...formData as any
         };
 
         StorageService.saveJob(newJob);
@@ -68,10 +97,36 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
             {/* Magic Paste Section */}
             <div style={{ background: '#f0f9ff', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #bae6fd' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#0369a1' }}>✨ Magic Paste (Smart Fill)</label>
+
+                {/* Helpful Tip for URLs */}
+                {pasteUrl && /^(http|https):\/\//.test(pasteUrl) && !pasteUrl.includes('demo-job') && (
+                    <div style={{ marginBottom: '0.5rem', padding: '0.5rem', background: '#fffbeb', color: '#b45309', borderRadius: '4px', fontSize: '0.85rem' }}>
+                        ⚠️ <strong>Note:</strong> AI cannot browse live websites (like LinkedIn) directly. <br />
+                        Please <strong>copy and paste the full job description text</strong> here for best results!
+                    </div>
+                )}
+
+                <style>
+                    {`
+                    @keyframes blink {
+                        0% { opacity: 0.2; }
+                        20% { opacity: 1; }
+                        100% { opacity: 0.2; }
+                    }
+                    .loading-dot {
+                        animation-name: blink;
+                        animation-duration: 1.4s;
+                        animation-iteration-count: infinite;
+                        animation-fill-mode: both;
+                    }
+                    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+                    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+                `}
+                </style>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <input
                         className="input"
-                        placeholder="Paste LinkedIn/Indeed URL here..."
+                        placeholder="Paste Job Description, Text, or URL..."
                         value={pasteUrl}
                         onChange={e => setPasteUrl(e.target.value)}
                         style={{ marginBottom: 0 }}
@@ -81,13 +136,20 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
                         className="btn btn-primary"
                         onClick={handleMagicPaste}
                         disabled={isExtracting || !pasteUrl}
-                        style={{ minWidth: '100px' }}
+                        style={{ minWidth: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                     >
-                        {isExtracting ? 'Thinking...' : 'Auto-Fill'}
+                        {isExtracting ? (
+                            <span>
+                                Thinking
+                                <span className="loading-dot">.</span>
+                                <span className="loading-dot">.</span>
+                                <span className="loading-dot">.</span>
+                            </span>
+                        ) : 'Auto-Fill'}
                     </button>
                 </div>
                 <small style={{ color: '#0369a1', display: 'block', marginTop: '0.5rem' }}>
-                    * Pro Tip: Try <code>demo-job</code> to see it in action!
+                    * Paste the full text of the job post here. Pro Tip: Try <code>demo-job</code> to see it in action!
                 </small>
             </div>
 
