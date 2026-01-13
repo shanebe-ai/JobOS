@@ -9,7 +9,9 @@ We replace the chaos of spreadsheets and disparate notes with a unified "Operati
 ## 🚀 Features
 
 - **Kanban-Style Job Board**: Visualize your job search pipeline from "Wishlist" to "Offer".
+- **Daily Dashboard**: A centralized command center to track daily goals, upcoming interviews, and recent activity.
 - **Application Management**: Keep track of every detail—job descriptions, salary ranges, and interview notes—in one place.
+- **Data Resilience**: Export/Import your data to JSON backups or fully reset your workspace.
 - **AI Copilot (Beta)**:
   - **Outreach Drafter**: Generate personalized cold outreach emails and follow-ups based on the role and company.
   - **Resume Analyst**: Analyze your resume against job descriptions to identify gaps and keywords (Coming Soon).

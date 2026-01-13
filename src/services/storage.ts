@@ -118,8 +118,9 @@ export const StorageService = {
     },
 
 
-    initialize: () => {
-        if (!localStorage.getItem(STORAGE_KEYS.JOBS)) {
+
+    initialize: (force: boolean = false) => {
+        if (force || !localStorage.getItem(STORAGE_KEYS.JOBS)) {
             const seedJobs: Job[] = [
                 {
                     id: 'job-1',
@@ -276,7 +277,18 @@ export const StorageService = {
 
     // Reset
     clearAll: () => {
-        Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+        // Set all lists to empty arrays so initialize() sees "data exists" (even if empty) and doesn't re-seed
+        set(STORAGE_KEYS.JOBS, []);
+        set(STORAGE_KEYS.APPLICATIONS, []);
+        set(STORAGE_KEYS.PEOPLE, []);
+        set(STORAGE_KEYS.ACTIONS, []);
+        set(STORAGE_KEYS.ENGAGEMENTS, []);
+        set(STORAGE_KEYS.ARTIFACTS, []);
+        set(STORAGE_KEYS.SUGGESTIONS, []);
+
+        // Clear singletons/settings
+        localStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
+        localStorage.removeItem('job_os_settings');
     },
 
     // Data Management (Backup/Restore)

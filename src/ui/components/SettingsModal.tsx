@@ -20,6 +20,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     const [importErrorOpen, setImportErrorOpen] = useState(false);
     const [importPendingFile, setImportPendingFile] = useState<File | null>(null);
 
+    // Reset/Erase Flow State
+    const [resetWarningOpen, setResetWarningOpen] = useState(false);
+    const [eraseWarningOpen, setEraseWarningOpen] = useState(false);
+
     useEffect(() => {
         if (isOpen) {
             const settings = StorageService.getSettings();
@@ -88,6 +92,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         reader.readAsText(importPendingFile);
     };
 
+    const handleLoadDefaults = () => {
+        StorageService.initialize(true); // Force re-seed
+        window.location.reload();
+    };
+
+    const handleEraseAll = () => {
+        StorageService.clearAll();
+        // Maybe preserve settings? The user said "erase all data", implying a fresh start.
+        // Usually safe to wipe everything for a true hard reset.
+        window.location.reload();
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -109,7 +125,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 borderRadius: '8px',
                 width: '100%',
                 maxWidth: '500px',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                maxHeight: '90vh',
+                overflowY: 'auto'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h2 style={{ margin: 0 }}>⚙️ Settings</h2>
@@ -172,10 +190,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     <h3 style={{ fontSize: '1rem', marginTop: 0, marginBottom: '1rem' }}>💾 Data Management</h3>
 
                     <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+                        {/* Export */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
                                 <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>Export Data</div>
-                                <div style={{ fontSize: '0.8rem', color: '#666' }}>Download a JSON backup of all your jobs and artifacts.</div>
+                                <div style={{ fontSize: '0.8rem', color: '#666' }}>Download a JSON backup of all your work.</div>
                             </div>
                             <button className="btn btn-outline" onClick={() => {
                                 const data = StorageService.exportAllData();
@@ -193,6 +212,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             </button>
                         </div>
 
+                        {/* Import */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
                                 <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>Import Backup</div>
@@ -207,6 +227,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                     onChange={onFileSelect}
                                 />
                             </label>
+                        </div>
+
+                        {/* Dangerous Zone */}
+                        <div style={{ marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px dashed #e2e8f0' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Allowed Actions</div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                <div>
+                                    <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>Load Default Data</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#666' }}>Reset to the initial demo dataset.</div>
+                                </div>
+                                <button
+                                    className="btn btn-outline"
+                                    onClick={() => setResetWarningOpen(true)}
+                                    style={{ borderColor: '#f59e0b', color: '#b45309' }}
+                                >
+                                    ⚠️ Load Defaults
+                                </button>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <div style={{ fontWeight: 500, fontSize: '0.9rem', color: 'var(--danger-color)' }}>Erase All Data</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#666' }}>Permanently clear everything. Start fresh.</div>
+                                </div>
+                                <button
+                                    className="btn btn-outline"
+                                    onClick={() => setEraseWarningOpen(true)}
+                                    style={{ borderColor: 'var(--danger-color)', color: 'var(--danger-color)' }}
+                                >
+                                    🗑️ Erase All
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -256,6 +309,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     cancelText={null}
                     onConfirm={() => setImportErrorOpen(false)}
                     onCancel={() => setImportErrorOpen(false)}
+                />
+
+                {/* Confirm Load Defaults */}
+                <ConfirmationModal
+                    isOpen={resetWarningOpen}
+                    title="⚠️ Load Default Data?"
+                    message="This will overwrite your current workspace with the standard JobOS demo data. Your current work will be lost unless you have backed it up. Proceed?"
+                    confirmText="Yes, Load Defaults"
+                    cancelText="Cancel"
+                    onConfirm={handleLoadDefaults}
+                    onCancel={() => setResetWarningOpen(false)}
+                />
+
+                {/* Confirm Erase All */}
+                <ConfirmationModal
+                    isOpen={eraseWarningOpen}
+                    title="🗑️ Erase Everything?"
+                    message="You are about to delete ALL jobs, applications, logs, and settings. This returns the app to a completely blank slate. There is no undo."
+                    confirmText="ERASE EVERYTHING"
+                    cancelText="Go Back"
+                    onConfirm={handleEraseAll}
+                    onCancel={() => setEraseWarningOpen(false)}
                 />
 
             </div>

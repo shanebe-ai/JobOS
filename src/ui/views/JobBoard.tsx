@@ -35,25 +35,11 @@ export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
         return getSuggestedAction(effectiveApp);
     };
 
-    const [showResetModal, setShowResetModal] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-    const handleReset = () => {
-        StorageService.clearAll();
-        window.location.reload();
-    };
-
     return (
         <div>
-            <ConfirmationModal
-                isOpen={showResetModal}
-                title="Reset Demo Data"
-                message="Are you sure you want to reset all data to the default demo state? This action cannot be undone."
-                onConfirm={handleReset}
-                onCancel={() => setShowResetModal(false)}
-            />
-
             <UserProfileModal
                 isOpen={showProfileModal}
                 onClose={() => setShowProfileModal(false)}
@@ -80,13 +66,6 @@ export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
                         onClick={() => setShowProfileModal(true)}
                     >
                         👤 My Profile
-                    </button>
-                    <button
-                        className="btn btn-outline"
-                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
-                        onClick={() => setShowResetModal(true)}
-                    >
-                        Reset Demo Data
                     </button>
                 </div>
             </div>
@@ -143,6 +122,6 @@ export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
                     <SuggestionList />
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
