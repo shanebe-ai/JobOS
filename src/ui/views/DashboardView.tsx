@@ -3,6 +3,7 @@ import { StorageService } from '../../services/storage';
 import type { Job } from '../../domain/job';
 import type { Application } from '../../domain/application';
 import type { Engagement } from '../../domain/engagement';
+import type { UserProfile } from '../../domain/user';
 import { SuggestionList } from '../components/SuggestionList';
 
 interface DashboardViewProps {
@@ -10,7 +11,7 @@ interface DashboardViewProps {
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [applications, setApplications] = useState<Application[]>([]);
     const [jobs, setJobs] = useState<Job[]>([]);
     const [engagements, setEngagements] = useState<Engagement[]>([]);

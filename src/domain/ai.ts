@@ -9,7 +9,7 @@ export interface OutreachDraftContext {
     recipientRole: string;
     companyName: string;
     jobTitle: string;
-    tone: 'Formal' | 'Casual' | 'Enthusiastic';
+    tone: 'Formal' | 'Casual' | 'Enthusiastic' | 'Professional';
     intent: 'Connect' | 'FollowUp' | 'ReferralRequest' | 'PeerOutreach';
     jobDescription?: string;
 }
