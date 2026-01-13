@@ -14,6 +14,7 @@ import { ArtifactList } from '../components/ArtifactList';
 import { DraftMessageModal } from '../components/DraftMessageModal';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { ResumeAnalyst } from '../components/ResumeAnalyst';
+import { ViewMessageModal } from '../components/ViewMessageModal';
 import type { OutreachDraftContext } from '../../domain/ai';
 
 interface JobDetailProps {
@@ -29,8 +30,13 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
     const [contacts, setContacts] = useState<Person[]>([]);
     const [artifacts, setArtifacts] = useState<Artifact[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // UI State
     const [draftingContext, setDraftingContext] = useState<OutreachDraftContext | null>(null);
+    const [draftBody, setDraftBody] = useState<string | undefined>(undefined);
+    const [editingArtifactId, setEditingArtifactId] = useState<string | null>(null);
     const [contactToDelete, setContactToDelete] = useState<string | null>(null);
+    const [viewMessage, setViewMessage] = useState<{ title: string; recipient: string; date: string; content: string } | null>(null);
 
     const refreshData = () => {
         const jobs = StorageService.getJobs();
@@ -64,8 +70,8 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
             try {
                 const updatedApp = WorkflowService.transition(app, newStatus);
                 setApp(updatedApp);
-                setSuggestions(RecommendationService.getSuggestedActions(updatedApp)); // Refresh suggestions
-                refreshData(); // Refresh engagements and other data to reflect the change
+                setSuggestions(RecommendationService.getSuggestedActions(updatedApp));
+                refreshData();
             } catch (e) {
                 alert(e);
             }
@@ -89,7 +95,6 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                             <label>Current Status</label>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{app.status}</span>
-                                {/* Simple transition buttons for demo */}
                                 {app.status === 'Saved' && <button className="btn btn-primary" onClick={() => handleStatusChange('Applied')}>Mark Applied</button>}
                                 {app.status === 'Applied' && <button className="btn btn-primary" onClick={() => handleStatusChange('OutreachStarted')}>Start Outreach</button>}
                                 {app.status === 'Applied' && <button className="btn btn-outline" onClick={() => handleStatusChange('Rejected')}>Rejected</button>}
@@ -119,7 +124,8 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                             defaultCompany={job.company}
                             onUpdate={refreshData}
                             onDraftEmail={(person) => {
-                                // Logic: If not the first contact, use Peer Outreach intent
+                                setDraftBody(undefined); // Clear any previous body
+                                setEditingArtifactId(null); // New Draft
                                 const isPrimary = contacts.length > 0 && contacts[0].id === person.id;
                                 setDraftingContext({
                                     recipientName: person.name,
@@ -136,7 +142,50 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                     </div>
 
                     <div style={{ marginTop: '1rem' }}>
-                        <ArtifactList jobId={jobId} artifacts={artifacts} onUpdate={refreshData} jobDescription={job.description} />
+                        <ArtifactList
+                            jobId={jobId}
+                            artifacts={artifacts}
+                            onUpdate={refreshData}
+                            jobDescription={job.description}
+                            onSelect={(artifact) => {
+                                if (artifact.type !== 'OutreachMessage') return;
+
+                                // Parse Content
+                                const lines = artifact.content.split('\n');
+                                const toLine = lines.find(l => l.startsWith('To: ')) || '';
+                                const contextLine = lines.find(l => l.startsWith('Context: ')) || '';
+
+                                const recipientName = toLine.replace('To: ', '').trim();
+                                const intent = (contextLine.replace('Context: ', '').trim() || 'Connect') as any;
+
+                                // Extract Body (Everything after the double newline)
+                                const bodyIndex = artifact.content.indexOf('\n\n');
+                                const body = bodyIndex !== -1 ? artifact.content.substring(bodyIndex + 2) : '';
+
+                                if (artifact.name.includes('Sent Email')) {
+                                    setViewMessage({
+                                        title: artifact.name,
+                                        recipient: recipientName,
+                                        date: artifact.createdDate,
+                                        content: body
+                                    });
+                                } else {
+                                    // Draft Mode
+                                    const targetContact = contacts.find(c => c.name === recipientName);
+                                    setDraftBody(body);
+                                    setEditingArtifactId(artifact.id); // Tracking ID
+                                    setDraftingContext({
+                                        recipientName: recipientName,
+                                        recipientRole: targetContact ? targetContact.role : 'Hiring Team',
+                                        companyName: job.company,
+                                        jobTitle: job.title,
+                                        tone: 'Professional',
+                                        intent: intent,
+                                        jobDescription: job.description
+                                    });
+                                }
+                            }}
+                        />
                     </div>
                 </div>
 
@@ -154,7 +203,8 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                                         className="btn btn-outline"
                                         style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
                                         onClick={() => {
-                                            // Smart Recipient Logic
+                                            setDraftBody(undefined); // Clear prev draft
+                                            setEditingArtifactId(null);
                                             const targetContact = contacts.find(c => c.company === job.company);
                                             const smartRecipient = targetContact ? targetContact.name.split(' ')[0] : 'Hiring Team';
 
@@ -185,12 +235,53 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
             {draftingContext && (
                 <DraftMessageModal
                     context={draftingContext}
+                    initialDraft={draftBody}
                     onClose={() => setDraftingContext(null)}
-                    onSave={(msg: string) => {
-                        console.log('Saved draft:', msg);
-                        // In real app, save as artifact or action note
+                    onSave={(msg: string, status: 'Draft' | 'Sent') => {
+                        const artifactName = `${status === 'Draft' ? 'Draft' : 'Sent Email'}: ${draftingContext.recipientName} (${new Date().toLocaleDateString()})`;
+
+                        // If editing, reuse ID and createdDate. If new, generate fresh.
+                        const existingArtifact = editingArtifactId ? artifacts.find(a => a.id === editingArtifactId) : null;
+
+                        const newArtifact: Artifact = {
+                            id: editingArtifactId || crypto.randomUUID(),
+                            applicationId: jobId,
+                            type: 'OutreachMessage',
+                            name: artifactName,
+                            content: `To: ${draftingContext.recipientName}\nContext: ${draftingContext.intent}\n\n${msg}`,
+                            version: existingArtifact ? existingArtifact.version + 1 : 1,
+                            createdDate: existingArtifact ? existingArtifact.createdDate : new Date().toISOString(),
+                            lastModifiedDate: new Date().toISOString()
+                        };
+                        StorageService.saveArtifact(newArtifact);
+
+                        if (status === 'Sent') {
+                            const engagementType = draftingContext.intent === 'FollowUp' ? 'FollowUp' : 'Outreach';
+                            const newEngagement: Engagement = {
+                                id: crypto.randomUUID(),
+                                applicationId: jobId,
+                                date: new Date().toISOString(),
+                                type: engagementType,
+                                platform: 'Other',
+                                description: `Sent email to ${draftingContext.recipientName} (${draftingContext.recipientRole})`
+                            };
+                            StorageService.saveEngagement(newEngagement);
+                        }
+
                         setDraftingContext(null);
+                        setEditingArtifactId(null);
+                        refreshData();
                     }}
+                />
+            )}
+
+            {viewMessage && (
+                <ViewMessageModal
+                    title={viewMessage.title}
+                    recipient={viewMessage.recipient}
+                    date={viewMessage.date}
+                    content={viewMessage.content}
+                    onClose={() => setViewMessage(null)}
                 />
             )}
 

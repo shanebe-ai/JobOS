@@ -13,7 +13,7 @@ The application is functional as a local-first application tracker. It allows us
 - [x] **Resume Analyst:** Implement the "Resume vs. Job Description" gap analysis.
 - [x] **Smart File Extraction:** Direct support for PDF and Word document text extraction.
 - [x] **Magic Paste:** Uses AI to extract structured job data from messy text.
-- [ ] **Smart Email Drafter:** Generate outreach emails and cover letters based on the job context.
+- [x] **Smart Email Drafter:** Generate outreach emails and cover letters based on the job context.
 
 ### 2. 🛡️ Data Resilience (The "Filing Cabinet")
 *Your work is valuable; losing it is not an option.*

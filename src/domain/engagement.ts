@@ -4,7 +4,9 @@ export type EngagementType =
     | 'Share'
     | 'Post'
     | 'Connect'
-    | 'StatusChange';
+    | 'StatusChange'
+    | 'Outreach'
+    | 'FollowUp';
 
 export interface Engagement {
     id: string;

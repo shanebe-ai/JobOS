@@ -26,13 +26,16 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
         if (!pasteUrl) return;
         setIsExtracting(true);
         try {
+            let contentToAnalyze = pasteUrl;
+
             // 1. Try AI Extraction if API Key is configured
             const settings = StorageService.getSettings();
             if (settings.apiKey) {
                 try {
                     const provider = new GoogleGeminiProvider(settings.apiKey, settings.model);
                     console.log('Attempting AI extraction...');
-                    const aiDetails = await provider.extractJobDetails(pasteUrl);
+                    // Pass the fetched HTML (or raw text/URL) to Gemini
+                    const aiDetails = await provider.extractJobDetails(contentToAnalyze);
 
                     if (aiDetails.title || aiDetails.company) {
                         setFormData(prev => ({
@@ -40,14 +43,15 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
                             title: aiDetails.title || prev.title,
                             company: aiDetails.company || prev.company,
                             location: aiDetails.location || prev.location,
+                            // Use raw URL as description if we couldn't fetch info, otherwise use AI description
                             description: aiDetails.description || pasteUrl,
-                            // Use simple heuristic for remote validation if strict boolean needed, 
-                            // or just trust user to toggle. 
-                            // For now, if location says 'Remote', check it.
+                            source: pasteUrl.startsWith('http') ? new URL(pasteUrl).hostname : prev.source,
                             isRemote: aiDetails.location?.toLowerCase().includes('remote') || prev.isRemote,
                         }));
                         setIsExtracting(false);
                         return;
+                    } else {
+                        console.warn('AI returned empty details. Using fallback.');
                     }
                 } catch (err) {
                     console.warn('AI Extraction failed, falling back to regex:', err);
@@ -59,6 +63,9 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
             setFormData(prev => ({
                 ...prev,
                 ...extracted,
+                // Ensure we at least save the link/content
+                description: extracted.description || prev.description || pasteUrl,
+                source: extracted.source || (pasteUrl.startsWith('http') ? new URL(pasteUrl).hostname : 'Unknown')
             }));
         } catch (error) {
             console.error("Extraction failed", error);
