@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from './ui/layout/DashboardLayout';
+import { DashboardView } from './ui/views/DashboardView';
 import { JobBoard } from './ui/views/JobBoard';
 import { AddJobView } from './ui/views/AddJobView';
 import { JobDetail } from './ui/views/JobDetail';
@@ -10,14 +11,14 @@ import { StorageService } from './services/storage';
 import './index.css';
 
 const App = () => {
-  const [activeView, setActiveView] = useState<'board' | 'add-job' | 'detail' | 'routine'>('board');
+  const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'add-job' | 'detail' | 'routine'>('dashboard');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   useEffect(() => {
     StorageService.initialize();
   }, []);
 
-  const handleNavigate = (view: 'board' | 'add-job' | 'detail' | 'routine') => {
+  const handleNavigate = (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine') => {
     setActiveView(view);
     if (view !== 'detail') setSelectedJobId(null);
   };
@@ -29,6 +30,7 @@ const App = () => {
   // ... existing code
   return (
     <DashboardLayout activeView={activeView} onNavigate={handleNavigate}>
+      {activeView === 'dashboard' && <DashboardView onNavigate={handleNavigate} />}
       {activeView === 'board' && <JobBoard onSelectJob={handleSelectJob} />}
       {activeView === 'add-job' && <AddJobView onJobAdded={() => handleNavigate('board')} onCancel={() => handleNavigate('board')} />}
       {activeView === 'routine' && <RoutineView />}

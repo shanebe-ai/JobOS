@@ -2,8 +2,12 @@
 
 > **Core Philosophy:** Finding a job is a job. JobOS is the workspace for that job.
 
-## 🟢 Current Status: Prototype / Beta
-The application is functional as a local-first application tracker. It allows users to visualize their pipeline, manage contacts, and mock drafting outreach emails.
+## 🟢 Current Status: Beta 2.0
+The application has evolved into a robust "Job Search OS".
+**Key New Features:**
+*   **Daily Dashboard:** A "Command Center" home view with daily goals (3 apps/day), pipeline pulse, and focus tracking.
+*   **Data Resilience:** Full JSON Export/Import capabilities and "Erase All" functionality for data management.
+*   **Intelligence Layer:** Gemini-powered Resume Analysis, Email Drafting, and Magic Paste.
 
 ## 🎯 Immediate Roadmap (Next Steps)
 
@@ -17,13 +21,15 @@ The application is functional as a local-first application tracker. It allows us
 
 ### 2. 🛡️ Data Resilience (The "Filing Cabinet")
 *Your work is valuable; losing it is not an option.*
-- [ ] **Data Export/Import:** Allow users to create backups of their local database (`.json` or `.zip`).
+- [x] **Data Export/Import:** Allow users to create backups of their local database (`.json`).
+- [x] **Erase All Data:** "Factory Reset" option for a clean slate.
 - [ ] **Cloud Sync (Future):** Optional encrypted cloud sync.
 
-### 3. ⚡ "Daily Standup" & Accountability (New!)
+### 3. ⚡ "Daily Standup" & Accountability
 *Treating the search like a job means having daily goals.*
-- [ ] **Daily Dashboard:** A view showing today's targets (e.g., "3 Applications", "2 Follow-ups").
-- [ ] **Streak Tracking:** Gamification to maintain momentum.
+- [x] **Daily Dashboard:** A view showing today's targets (e.g., "3 Applications", "2 Follow-ups").
+- [x] **Daily Goal Tracker:** Progress bar for daily application targets.
+- [ ] **Streak Tracking:** Gamification to maintain momentum (Next up!).
 
 ### 4. 🎤 Interview Preparation Workspace (New!)
 *Preparation is half the work.*
@@ -39,3 +45,22 @@ The application is functional as a local-first application tracker. It allows us
 ## 🏗️ Technical Health
 - **Testing:** Basic setup with Vitest. Needs higher coverage for core domain logic.
 - **CI/CD:** Basic GitHub Actions workflow needed for automated checking.
+
+---
+
+## 📝 Context Log for Next Session
+*Read this before starting work.*
+
+**Last Completed:** Daily Dashboard Implementation (Phase 4).
+*   **Added:** `DashboardView` as default home.
+*   **Added:** `SettingsModal` data management (Export/Import/Reset/Erase).
+*   **Fixed:** Syntax errors in `JobBoard`, missing Application statuses.
+
+**Next Priority:** **Streak Tracking** or **Interview Prep Workspace**.
+*   **Streak Tracking:** Extend the Dashboard to track consecutive days of activity.
+*   **Interview Prep:** Create a new "Preparation" view for storing STAR stories.
+
+**Known Issues/Debts:**
+*   `JobBoard.tsx` has some minor lint warnings about unused imports.
+*   `ApplicationStatus` type definition was updated; ensure all consumers match.
+*   **Test Coverage:** No new tests were written for Dashboard or Settings logic. verify manually or add tests next.
