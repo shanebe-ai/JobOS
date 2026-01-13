@@ -6,9 +6,19 @@ interface ConfirmationModalProps {
     message: string;
     onConfirm: () => void;
     onCancel: () => void;
+    confirmText?: string;
+    cancelText?: string | null;
 }
 
-export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, title, message, onConfirm, onCancel }) => {
+export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
+    isOpen,
+    title,
+    message,
+    onConfirm,
+    onCancel,
+    confirmText = 'Confirm',
+    cancelText = 'Cancel'
+}) => {
     if (!isOpen) return null;
 
     return (
@@ -28,8 +38,16 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, ti
                 <h3 style={{ marginTop: 0 }}>{title}</h3>
                 <p style={{ margin: '1rem 0' }}>{message}</p>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                    <button className="btn btn-outline" onClick={onCancel}>Cancel</button>
-                    <button className="btn btn-primary" onClick={onConfirm} style={{ background: 'var(--danger-color)', borderColor: 'var(--danger-color)' }}>Confirm</button>
+                    {cancelText && (
+                        <button className="btn btn-outline" onClick={onCancel}>{cancelText}</button>
+                    )}
+                    <button
+                        className="btn btn-primary"
+                        onClick={onConfirm}
+                        style={cancelText ? { background: 'var(--danger-color)', borderColor: 'var(--danger-color)' } : {}}
+                    >
+                        {confirmText}
+                    </button>
                 </div>
             </div>
         </div>

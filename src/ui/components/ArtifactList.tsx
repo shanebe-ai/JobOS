@@ -8,10 +8,11 @@ interface ArtifactListProps {
     jobId?: string;
     artifacts: Artifact[];
     onUpdate: () => void;
+    onSelect: (artifact: Artifact) => void;
     jobDescription?: string;
 }
 
-export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, onUpdate, jobDescription }) => {
+export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, onUpdate, onSelect, jobDescription }) => {
     const [isAdding, setIsAdding] = useState(false);
     const [artifactToDelete, setArtifactToDelete] = useState<string | null>(null);
     const [isExtracting, setIsExtracting] = useState(false);
@@ -59,7 +60,7 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
     return (
         <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3>Artifacts & Files</h3>
+                <h3>Files & Outreach History</h3>
                 <button className="btn btn-outline" onClick={() => setIsAdding(!isAdding)}>
                     {isAdding ? 'Cancel' : '+ Add File'}
                 </button>
@@ -137,8 +138,14 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
                 {relevantArtifacts.map(a => (
                     <div key={a.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--border-color)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <strong>{a.name}</strong> <span className="badge" style={{ background: '#f1f5f9' }}>{a.type} v{a.version}</span>
+                            <div
+                                style={{ cursor: a.type === 'OutreachMessage' ? 'pointer' : 'default' }}
+                                onClick={() => a.type === 'OutreachMessage' && onSelect(a)}
+                            >
+                                <strong style={{ color: a.type === 'OutreachMessage' ? 'var(--primary-color)' : 'inherit', textDecoration: a.type === 'OutreachMessage' ? 'underline' : 'none' }}>
+                                    {a.name}
+                                </strong>
+                                <span className="badge" style={{ background: '#f1f5f9', marginLeft: '0.5rem' }}>{a.type} v{a.version}</span>
                                 <p style={{ margin: '0.25rem 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{new Date(a.createdDate).toLocaleDateString()}</p>
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

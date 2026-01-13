@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { StorageService } from '../../services/storage';
 import { GoogleGeminiProvider } from '../../services/ai/providers/gemini';
 
+import { ConfirmationModal } from './ConfirmationModal';
+
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -11,6 +13,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     const [apiKey, setApiKey] = useState('');
     const [status, setStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
     const [statusMessage, setStatusMessage] = useState('');
+
+    // Import Flow State
+    const [importWarningOpen, setImportWarningOpen] = useState(false);
+    const [importSuccessOpen, setImportSuccessOpen] = useState(false);
+    const [importErrorOpen, setImportErrorOpen] = useState(false);
+    const [importPendingFile, setImportPendingFile] = useState<File | null>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -50,6 +58,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             // Show the actual error message to the user for debugging
             setStatusMessage(`Error: ${error.message || 'Unknown error'}`);
         }
+    };
+
+    const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setImportPendingFile(file);
+        setImportWarningOpen(true);
+        // Reset input value so same file can be selected again if needed
+        e.target.value = '';
+    };
+
+    const processImport = () => {
+        if (!importPendingFile) return;
+        setImportWarningOpen(false);
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const content = event.target?.result as string;
+            if (content) {
+                const success = StorageService.importData(content);
+                if (success) {
+                    setImportSuccessOpen(true);
+                } else {
+                    setImportErrorOpen(true);
+                }
+            }
+        };
+        reader.readAsText(importPendingFile);
     };
 
     if (!isOpen) return null;
@@ -132,16 +168,96 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     </div>
                 )}
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                    <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+                <div style={{ marginBottom: '1.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1rem', marginTop: 0, marginBottom: '1rem' }}>💾 Data Management</h3>
+
+                    <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>Export Data</div>
+                                <div style={{ fontSize: '0.8rem', color: '#666' }}>Download a JSON backup of all your jobs and artifacts.</div>
+                            </div>
+                            <button className="btn btn-outline" onClick={() => {
+                                const data = StorageService.exportAllData();
+                                const blob = new Blob([data], { type: 'application/json' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `jobos_backup_${new Date().toISOString().split('T')[0]}.json`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                            }}>
+                                ⬇️ Download
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>Import Backup</div>
+                                <div style={{ fontSize: '0.8rem', color: '#666' }}>Restore from a previously saved JSON file.</div>
+                            </div>
+                            <label className="btn btn-outline" style={{ cursor: 'pointer' }}>
+                                📂 Restore
+                                <input
+                                    type="file"
+                                    accept=".json"
+                                    style={{ display: 'none' }}
+                                    onChange={onFileSelect}
+                                />
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+                    <button className="btn btn-outline" onClick={onClose}>Done</button>
                     <button
                         className="btn btn-primary"
                         onClick={handleSave}
                         disabled={!apiKey || status === 'validating'}
                     >
-                        {status === 'validating' ? 'Verifying...' : 'Save & Connect'}
+                        {status === 'validating' ? 'Verifying...' : 'Test & Save Key'}
                     </button>
                 </div>
+
+                {/* Confirm Import Warning */}
+                <ConfirmationModal
+                    isOpen={importWarningOpen}
+                    title="⚠️ Overwrite Data Warning"
+                    message="Importing this backup will PERMANENTLY ERASE and overwrite all your current data. This action cannot be undone. Are you sure you want to proceed?"
+                    confirmText="Overwrite Everything"
+                    cancelText="Cancel"
+                    onConfirm={processImport}
+                    onCancel={() => {
+                        setImportWarningOpen(false);
+                        setImportPendingFile(null);
+                    }}
+                />
+
+                {/* Import Success */}
+                <ConfirmationModal
+                    isOpen={importSuccessOpen}
+                    title="✅ Import Successful"
+                    message="Your data has been successfully restored from the backup file. The application will now reload to apply changes."
+                    confirmText="Reload App"
+                    cancelText={null}
+                    onConfirm={() => window.location.reload()}
+                    onCancel={() => { }}
+                />
+
+                {/* Import Error */}
+                <ConfirmationModal
+                    isOpen={importErrorOpen}
+                    title="❌ Import Failed"
+                    message="The selected file either is not a valid JobOS backup or is corrupted. No data was changed."
+                    confirmText="Close"
+                    cancelText={null}
+                    onConfirm={() => setImportErrorOpen(false)}
+                    onCancel={() => setImportErrorOpen(false)}
+                />
+
             </div>
         </div>
     );

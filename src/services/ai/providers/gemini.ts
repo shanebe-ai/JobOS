@@ -23,14 +23,32 @@ export class GoogleGeminiProvider implements AIService {
         if (!this.model) {
             throw new Error('Gemini Provider not initialized with API Key');
         }
-        try {
-            const result = await this.model.generateContent(prompt);
-            const response = await result.response;
-            return response.text();
-        } catch (error) {
-            console.error('Gemini Generation Error:', error);
-            throw error;
+
+        const maxRetries = 3;
+        let attempt = 0;
+
+        while (attempt < maxRetries) {
+            try {
+                const result = await this.model.generateContent(prompt);
+                const response = await result.response;
+                return response.text();
+            } catch (error: any) {
+                const msg = error.message || '';
+                const isQuota = msg.includes('429') || msg.toLowerCase().includes('quota');
+
+                if (isQuota && attempt < maxRetries - 1) {
+                    console.warn(`Gemini 429 Hit. Retrying (Attempt ${attempt + 1}/${maxRetries})...`);
+                    const delay = Math.pow(2, attempt) * 1000 + 500; // 1.5s, 3.5s, 7.5s...
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    attempt++;
+                    continue;
+                }
+
+                console.error('Gemini Generation Error:', error);
+                throw error;
+            }
         }
+        throw new Error("Max retries exceeded");
     }
 
     /**

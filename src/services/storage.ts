@@ -279,6 +279,68 @@ export const StorageService = {
         Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
     },
 
+    // Data Management (Backup/Restore)
+    exportAllData: (): string => {
+        const backup: Record<string, any> = {
+            meta: {
+                version: 1,
+                date: new Date().toISOString(),
+                appName: 'JobOS'
+            },
+            data: {}
+        };
+
+        Object.values(STORAGE_KEYS).forEach(key => {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                try {
+                    backup.data[key] = JSON.parse(raw);
+                } catch (e) {
+                    console.warn(`Failed to parse key ${key} for backup`, e);
+                }
+            }
+        });
+
+        // Also capture settings
+        const settings = localStorage.getItem('job_os_settings');
+        if (settings) {
+            backup.data['job_os_settings'] = JSON.parse(settings);
+        }
+
+        return JSON.stringify(backup, null, 2);
+    },
+
+    importData: (jsonContent: string): boolean => {
+        try {
+            const backup = JSON.parse(jsonContent);
+
+            // Basic validation
+            if (!backup || !backup.meta || !backup.data) {
+                console.error("Invalid backup format: Missing meta or data fields.");
+                return false;
+            }
+
+            if (backup.meta.appName !== 'JobOS') {
+                console.error("Invalid backup format: Not a JobOS backup.");
+                return false;
+            }
+
+            // Restore data
+            Object.entries(backup.data).forEach(([key, value]) => {
+                // Ensure we only restore known keys or valid settings
+                const validKeys = Object.values(STORAGE_KEYS);
+                if (validKeys.includes(key) || key === 'job_os_settings') {
+                    localStorage.setItem(key, JSON.stringify(value));
+                }
+            });
+
+            return true;
+        } catch (e) {
+            console.error("Import failed:", e);
+            return false;
+        }
+    },
+
     // Settings (API Keys, etc)
     getSettings: () => {
         const data = localStorage.getItem('job_os_settings');

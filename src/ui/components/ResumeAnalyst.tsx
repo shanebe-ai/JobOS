@@ -29,8 +29,51 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
         }
     }, [artifacts]);
 
+    // Local / Offline Analysis Logic
+    const generateLocalAnalysis = (jd: string, resumeContent: string): string => {
+        // Simple keyword extraction for fallback
+        const commonTechKeywords = [
+            'React', 'TypeScript', 'Node', 'Python', 'Java', 'AWS', 'Docker', 'Kubernetes', 'SQL', 'NoSQL',
+            'Agile', 'Jira', 'Leadership', 'Communication', 'Design System', 'CI/CD', 'Testing', 'Jest', 'Cypress'
+        ];
+
+        const jdLower = jd.toLowerCase();
+        const resumeLower = resumeContent.toLowerCase();
+
+        const foundKeywords = commonTechKeywords.filter(k => jdLower.includes(k.toLowerCase()) && resumeLower.includes(k.toLowerCase()));
+        const missingKeywords = commonTechKeywords.filter(k => jdLower.includes(k.toLowerCase()) && !resumeLower.includes(k.toLowerCase()));
+
+        // Calculate a naive score
+        const score = Math.min(100, 50 + (foundKeywords.length * 5));
+
+        return `
+            <div class="analysis-result">
+                <h3>⚠️ Offline Match Score: ~${score}%</h3>
+                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
+                    (Generated using Local Keyword Matcher because AI is unavailable)
+                </p>
+
+                <h4>🟢 Quick Match (Keywords Found)</h4>
+                <ul>
+                    ${foundKeywords.length > 0 ? foundKeywords.map(k => `<li>${k}</li>`).join('') : '<li>No common tech keywords detected by simple match.</li>'}
+                </ul>
+
+                <h4>🔴 Potential Gaps (Keywords in JD but not Resume)</h4>
+                <ul>
+                    ${missingKeywords.length > 0 ? missingKeywords.map(k => `<li>${k}</li>`).join('') : '<li>No obvious missing keywords from common list.</li>'}
+                </ul>
+
+                <h4>💡 Recommendation</h4>
+                <ul>
+                    <li>Check if you have these missing keywords in your resume but phrased differently.</li>
+                    <li>Ensure your formatting is readable.</li>
+                </ul>
+            </div>
+        `;
+    };
+
     const handleAnalyze = async () => {
-        if (!apiKey || !selectedArtifactId) return;
+        if (!selectedArtifactId) return;
 
         const resume = resumes.find(r => r.id === selectedArtifactId);
         if (!resume) return;
@@ -39,48 +82,56 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
         setError(null);
         setAnalysis(null);
 
-        try {
-            const provider = new GoogleGeminiProvider(apiKey, modelName);
+        // Hybrid Mode: Try AI if Key exists, else Local
+        if (apiKey) {
+            try {
+                const provider = new GoogleGeminiProvider(apiKey, modelName);
+                const prompt = `
+                Role: Expert Recruiter / ATS Specialist.
+                Task: Analyze the fit between the Resume and Job Description.
+                
+                Job Description:
+                "${jobDescription}"
+                
+                Resume Content:
+                "${resume.content}"
+                
+                Output Format:
+                Return raw HTML (no markdown backticks, no \`\`\`html wrapper).
+                Use simple styling:
+                - Use <h3> for headers (Match Score, Strengths, Gaps).
+                - Use <ul> and <li> for lists.
+                - Use <strong> for emphasis.
+                - For Match Score, make it large and bold.
+                
+                Example Structure:
+                <div class="analysis-result">
+                  <h3>Match Score: 85%</h3>
+                  <h4>🟢 Strengths</h4>
+                  <ul>...</ul>
+                  <h4>🔴 Critical Gaps</h4>
+                  <ul>...</ul>
+                  <h4>💡 Recommendations</h4>
+                  <ul>...</ul>
+                </div>
+                `;
 
-            const prompt = `
-Role: Expert Recruiter / ATS Specialist.
-Task: Analyze the fit between the Resume and Job Description.
-
-Job Description:
-"${jobDescription}"
-
-Resume Content:
-"${resume.content}"
-
-Output Format:
-Return raw HTML (no markdown backticks, no \`\`\`html wrapper).
-Use simple styling:
-- Use <h3> for headers (Match Score, Strengths, Gaps).
-- Use <ul> and <li> for lists.
-- Use <strong> for emphasis.
-- For Match Score, make it large and bold.
-
-Example Structure:
-<div class="analysis-result">
-  <h3>Match Score: 85%</h3>
-  <h4>🟢 Strengths</h4>
-  <ul>...</ul>
-  <h4>🔴 Critical Gaps</h4>
-  <ul>...</ul>
-  <h4>💡 Recommendations</h4>
-  <ul>...</ul>
-</div>
-            `;
-
-            let result = await provider.generateText(prompt);
-            // Clean up if the model adds backticks despite instructions
-            result = result.replace(/```html/g, '').replace(/```/g, '');
-            setAnalysis(result);
-        } catch (err: any) {
-            setError(err.message || 'Failed to analyze resume.');
-        } finally {
-            setLoading(false);
+                let result = await provider.generateText(prompt);
+                // Clean up if the model adds backticks despite instructions
+                result = result.replace(/```html/g, '').replace(/```/g, '');
+                setAnalysis(result);
+            } catch (err: any) {
+                console.warn('AI Analysis failed, falling back to local.', err);
+                const localResult = generateLocalAnalysis(jobDescription, resume.content);
+                setAnalysis(localResult);
+            }
+        } else {
+            // No Key -> Direct Local Mode
+            const localResult = generateLocalAnalysis(jobDescription, resume.content);
+            setAnalysis(localResult);
         }
+
+        setLoading(false);
     };
 
     if (!apiKey) {
