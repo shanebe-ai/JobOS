@@ -55,6 +55,7 @@ The application has evolved into a robust "Job Search OS".
 *   **Added:** `DashboardView` as default home.
 *   **Added:** `SettingsModal` data management (Export/Import/Reset/Erase).
 *   **Fixed:** Syntax errors in `JobBoard`, missing Application statuses.
+*   **Added:** `ViewMessageModal` for viewing application correspondence.
 
 **Next Priority:** **Streak Tracking** or **Interview Prep Workspace**.
 *   **Streak Tracking:** Extend the Dashboard to track consecutive days of activity.
