@@ -3,10 +3,11 @@ import React from 'react';
 interface DashboardLayoutProps {
     activeView: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine';
     onNavigate: (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine') => void;
+    onAddCustomTask?: () => void;
     children: React.ReactNode;
 }
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView, onNavigate }) => {
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView, onNavigate, onAddCustomTask }) => {
     return (
         <div className="layout">
             <aside className="sidebar">
@@ -39,6 +40,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
                         onClick={() => onNavigate('routine')}
                     >
                         ✅ My Routine
+                    </button>
+                    <button
+                        className="btn btn-outline"
+                        style={{ justifyContent: 'flex-start', border: 'none' }}
+                        onClick={onAddCustomTask}
+                    >
+                        + Custom Task
                     </button>
                 </nav>
             </aside>

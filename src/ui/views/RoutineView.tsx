@@ -5,9 +5,17 @@ import { SuggestionModal } from '../components/SuggestionModal';
 import { SuggestionCard } from '../components/SuggestionCard';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 
-export const RoutineView: React.FC = () => {
+import { AppHeader } from '../components/AppHeader';
+
+interface RoutineViewProps {
+    onNavigate: (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine') => void;
+    isAddModalOpen: boolean;
+    onSetAddModalOpen: (isOpen: boolean) => void;
+}
+
+export const RoutineView: React.FC<RoutineViewProps> = ({ onNavigate, isAddModalOpen, onSetAddModalOpen }) => {
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    // Removed local isAddModalOpen state
     const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
     // We need state for edit/delete modals if we want them to work perfectly
     // For now, let's keep it simple or minimal.
@@ -120,10 +128,11 @@ export const RoutineView: React.FC = () => {
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h1 style={{ margin: 0 }}>My Routine</h1>
-                <button className="btn btn-primary" onClick={() => { setEditingSuggestion(null); setIsAddModalOpen(true); }}>+ Add Suggestion</button>
-            </div>
+            <AppHeader
+                title="My Routine"
+                onNavigate={onNavigate}
+                currentView="routine"
+            />
 
             <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: '2rem' }}>
                 <button
@@ -190,7 +199,7 @@ export const RoutineView: React.FC = () => {
                                 statusOverride={status !== 'Open' ? status : null}
                                 onComplete={(id) => handleAction(id, 'Completed')}
                                 onSkip={(id) => handleAction(id, 'Skipped')}
-                                onEdit={(s) => { setEditingSuggestion(s); setIsAddModalOpen(true); }}
+                                onEdit={(s) => { setEditingSuggestion(s); onSetAddModalOpen(true); }}
                                 onDelete={(id) => handleDelete(id)}
                             />
                         );
@@ -237,7 +246,7 @@ export const RoutineView: React.FC = () => {
 
             <SuggestionModal
                 isOpen={isAddModalOpen}
-                onClose={() => { setIsAddModalOpen(false); setEditingSuggestion(null); }}
+                onClose={() => { onSetAddModalOpen(false); setEditingSuggestion(null); }}
                 onSave={handleSave}
                 initialData={editingSuggestion}
             />

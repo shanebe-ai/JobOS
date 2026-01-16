@@ -1,5 +1,6 @@
 import type { Application } from '../domain/application';
 import { type Action, type ActionType, type ActionPriority } from '../domain/action';
+import { generateId } from '../utils/uuid';
 
 export const RecommendationService = {
     getSuggestedActions: (app: Application): Action[] => {
@@ -45,7 +46,7 @@ const createSuggestion = (
     priority: ActionPriority
 ): Action => {
     return {
-        id: crypto.randomUUID(),
+        id: generateId(),
         applicationId: appId,
         type,
         title,

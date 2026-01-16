@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StorageService } from '../../services/storage';
 import { GoogleGeminiProvider } from '../../services/ai/providers/gemini';
+import { LetsMCPProvider } from '../../services/ai/providers/letsmcp';
 import type { Artifact } from '../../domain/artifact';
 
 interface ResumeAnalystProps {
@@ -13,17 +14,11 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
     const [analysis, setAnalysis] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [apiKey, setApiKey] = useState<string | null>(null);
-    const [modelName, setModelName] = useState<string>('gemini-1.5-flash');
+    const [analysisSource, setAnalysisSource] = useState<string>('');
 
     const resumes = artifacts.filter(a => a.type === 'Resume');
 
     useEffect(() => {
-        const settings = StorageService.getSettings();
-        setApiKey(settings.apiKey);
-        if (settings.model) {
-            setModelName(settings.model);
-        }
         if (resumes.length > 0) {
             setSelectedArtifactId(resumes[0].id);
         }
@@ -31,7 +26,6 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
 
     // Local / Offline Analysis Logic
     const generateLocalAnalysis = (jd: string, resumeContent: string): string => {
-        // Simple keyword extraction for fallback
         const commonTechKeywords = [
             'React', 'TypeScript', 'Node', 'Python', 'Java', 'AWS', 'Docker', 'Kubernetes', 'SQL', 'NoSQL',
             'Agile', 'Jira', 'Leadership', 'Communication', 'Design System', 'CI/CD', 'Testing', 'Jest', 'Cypress'
@@ -43,14 +37,15 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
         const foundKeywords = commonTechKeywords.filter(k => jdLower.includes(k.toLowerCase()) && resumeLower.includes(k.toLowerCase()));
         const missingKeywords = commonTechKeywords.filter(k => jdLower.includes(k.toLowerCase()) && !resumeLower.includes(k.toLowerCase()));
 
-        // Calculate a naive score
         const score = Math.min(100, 50 + (foundKeywords.length * 5));
 
         return `
             <div class="analysis-result">
                 <h3>⚠️ Offline Match Score: ~${score}%</h3>
-                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
-                    (Generated using Local Keyword Matcher because AI is unavailable)
+                <p style="font-style: italic; font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
+                    <strong>Note:</strong> Used "Local Keyword Matcher" because AI services were unavailable.
+                    <br/>
+                    (LetsMCP: Failed/Unreachable | Gemini: No API Key or Failed)
                 </p>
 
                 <h4>🟢 Quick Match (Keywords Found)</h4>
@@ -72,6 +67,38 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
         `;
     };
 
+    // Convert structured analysis to HTML
+    const formatAnalysisAsHtml = (data: {
+        matchScore: number;
+        strengths: string[];
+        gaps: string[];
+        recommendations: string[];
+    }, source: string): string => {
+        return `
+            <div class="analysis-result">
+                <h3>Match Score: ${data.matchScore}%</h3>
+                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">
+                    (Generated via ${source})
+                </p>
+
+                <h4>🟢 Strengths</h4>
+                <ul>
+                    ${data.strengths.length > 0 ? data.strengths.map(s => `<li>${s}</li>`).join('') : '<li>No specific strengths identified.</li>'}
+                </ul>
+
+                <h4>🔴 Critical Gaps</h4>
+                <ul>
+                    ${data.gaps.length > 0 ? data.gaps.map(g => `<li>${g}</li>`).join('') : '<li>No critical gaps identified.</li>'}
+                </ul>
+
+                <h4>💡 Recommendations</h4>
+                <ul>
+                    ${data.recommendations.length > 0 ? data.recommendations.map(r => `<li>${r}</li>`).join('') : '<li>No specific recommendations.</li>'}
+                </ul>
+            </div>
+        `;
+    };
+
     const handleAnalyze = async () => {
         if (!selectedArtifactId) return;
 
@@ -81,21 +108,55 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
         setLoading(true);
         setError(null);
         setAnalysis(null);
+        setAnalysisSource('');
 
-        // Hybrid Mode: Try AI if Key exists, else Local
-        if (apiKey) {
+        const settings = StorageService.getSettings();
+
+        // 1. Try LetsMCP first
+        if (settings.aiProvider === 'letsmcp' || !settings.apiKey) {
             try {
-                const provider = new GoogleGeminiProvider(apiKey, modelName);
+                const mcpProvider = new LetsMCPProvider({
+                    baseUrl: settings.mcpUrl || '',
+                    provider: settings.mcpProvider as 'groq' | 'claude' | 'gemini',
+                });
+
+                const isAvailable = await mcpProvider.isAvailable();
+                const hasAI = await mcpProvider.hasAIProvider();
+
+                if (isAvailable && hasAI) {
+                    console.log('Attempting LetsMCP resume analysis...');
+                    const result = await mcpProvider.analyzeResume(jobDescription, resume.content);
+
+                    if (result && typeof result.matchScore === 'number') {
+                        setAnalysisSource(`LetsMCP (${settings.mcpProvider || 'groq'})`);
+                        setAnalysis(formatAnalysisAsHtml(result, `LetsMCP - ${settings.mcpProvider || 'groq'}`));
+                        setLoading(false);
+                        return;
+                    }
+                } else {
+                    console.warn('LetsMCP unavailable or has no AI, trying Gemini...');
+                    setError(`LetsMCP Check Failed: Available=${isAvailable}, HasAI=${hasAI}`);
+                }
+            } catch (err: any) {
+                console.warn('LetsMCP analysis failed, falling back to Gemini:', err);
+                setError(`LetsMCP Error: ${err.message}`);
+            }
+        }
+
+        // 2. Try Gemini if API Key is configured
+        if (settings.apiKey) {
+            try {
+                const provider = new GoogleGeminiProvider(settings.apiKey, settings.model);
                 const prompt = `
                 Role: Expert Recruiter / ATS Specialist.
                 Task: Analyze the fit between the Resume and Job Description.
-                
+
                 Job Description:
                 "${jobDescription}"
-                
+
                 Resume Content:
                 "${resume.content}"
-                
+
                 Output Format:
                 Return raw HTML (no markdown backticks, no \`\`\`html wrapper).
                 Use simple styling:
@@ -103,7 +164,7 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
                 - Use <ul> and <li> for lists.
                 - Use <strong> for emphasis.
                 - For Match Score, make it large and bold.
-                
+
                 Example Structure:
                 <div class="analysis-result">
                   <h3>Match Score: 85%</h3>
@@ -117,31 +178,22 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
                 `;
 
                 let result = await provider.generateText(prompt);
-                // Clean up if the model adds backticks despite instructions
                 result = result.replace(/```html/g, '').replace(/```/g, '');
+                setAnalysisSource(`Gemini (${settings.model})`);
                 setAnalysis(result);
+                setLoading(false);
+                return;
             } catch (err: any) {
-                console.warn('AI Analysis failed, falling back to local.', err);
-                const localResult = generateLocalAnalysis(jobDescription, resume.content);
-                setAnalysis(localResult);
+                console.warn('Gemini analysis failed, falling back to local.', err);
             }
-        } else {
-            // No Key -> Direct Local Mode
-            const localResult = generateLocalAnalysis(jobDescription, resume.content);
-            setAnalysis(localResult);
         }
 
+        // 3. Final fallback: Local analysis
+        setAnalysisSource('Local Keyword Matcher');
+        const localResult = generateLocalAnalysis(jobDescription, resume.content);
+        setAnalysis(localResult);
         setLoading(false);
     };
-
-    if (!apiKey) {
-        return (
-            <div className="card" style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', textAlign: 'center', padding: '2rem' }}>
-                <p>🤖 Configure AI Settings to use Resume Analyst</p>
-                <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Click "Settings" in the top right.</p>
-            </div>
-        );
-    }
 
     return (
         <div className="card">
@@ -185,7 +237,7 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
                     }
                     .loading-dot:nth-child(2) { animation-delay: 0.2s; }
                     .loading-dot:nth-child(3) { animation-delay: 0.4s; }
-                    
+
                     /* Custom Scrollbar for Analysis */
                     .analysis-content::-webkit-scrollbar {
                         width: 8px;
@@ -219,11 +271,20 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
                 ) : '✨ Run Gap Analysis'}
             </button>
 
-            {error && (
-                <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#fee2e2', color: '#991b1b', borderRadius: '4px', fontSize: '0.9rem' }}>
-                    Error: {error}
+            {analysisSource && (
+                <div style={{ marginTop: '0.5rem', padding: '0.25rem 0.5rem', background: '#e0e7ff', color: '#3730a3', borderRadius: '4px', fontSize: '0.8rem', display: 'inline-block' }}>
+                    Powered by: {analysisSource}
                 </div>
             )}
+
+            {/* Debug Info */}
+            <div style={{ marginTop: '1rem', padding: '0.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                <ul style={{ margin: '0', padding: '0 0 0 1rem' }}>
+                    <li>LetsMCP Configured: {StorageService.getSettings().aiProvider === 'letsmcp' ? 'Yes' : 'No'}</li>
+                    <li>Client API Key Present: {StorageService.getSettings().apiKey ? 'Yes' : 'No (Skipping Gemini Direct)'}</li>
+                    {error && <li style={{ color: 'red' }}>Error: {error}</li>}
+                </ul>
+            </div>
 
             {analysis && (
                 <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
