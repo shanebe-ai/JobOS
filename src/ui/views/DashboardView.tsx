@@ -48,7 +48,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
     // 2. Pulse Metrics
     const activeAppsCount = applications.filter(a => !a.archived && a.status !== 'Rejected').length;
-    const interviewCount = applications.filter(a => a.status === 'Interview' || a.status === 'Offer').length;
+    const interviewCount = applications.filter(a => a.status === 'Interviewing' || a.status === 'Offer').length;
 
     // Response Rate: (Interviews + Offers) / (Applied + Interview + Offer + Rejected) * 100
     // We exclude 'Saved' and 'OutreachStarted' from the denominator as they haven't been "applied" yet technically, 
