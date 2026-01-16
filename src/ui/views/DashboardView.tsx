@@ -5,6 +5,7 @@ import type { Application } from '../../domain/application';
 import type { Engagement } from '../../domain/engagement';
 import type { UserProfile } from '../../domain/user';
 import { SuggestionList } from '../components/SuggestionList';
+import { AppHeader } from '../components/AppHeader';
 
 interface DashboardViewProps {
     onNavigate: (view: 'board' | 'add-job' | 'detail' | 'routine') => void;
@@ -72,16 +73,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             {/* Header */}
-            <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <div>
-                    <h1 style={{ marginBottom: '0.5rem' }}>{greeting}{profile?.name ? `, ${profile.name}` : ''}.</h1>
-                    <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Here is your daily briefing.</p>
-                </div>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button className="btn btn-outline" onClick={() => onNavigate('board')}>View Board</button>
-                    <button className="btn btn-primary" onClick={() => onNavigate('add-job')}>+ Add Job</button>
-                </div>
-            </div>
+            <AppHeader
+                title={<h1 style={{ marginBottom: '0.5rem' }}>{greeting}{profile?.name ? `, ${profile.name}` : ''}.</h1>}
+                subtitle="Here is your daily briefing."
+                onNavigate={onNavigate}
+                currentView="dashboard"
+            />
 
             {/* Metrics Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>

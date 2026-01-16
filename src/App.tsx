@@ -13,6 +13,7 @@ import './index.css';
 const App = () => {
   const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'add-job' | 'detail' | 'routine'>('dashboard');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
 
   useEffect(() => {
     StorageService.initialize();
@@ -29,11 +30,24 @@ const App = () => {
   };
   // ... existing code
   return (
-    <DashboardLayout activeView={activeView} onNavigate={handleNavigate}>
+    <DashboardLayout
+      activeView={activeView}
+      onNavigate={handleNavigate}
+      onAddCustomTask={() => {
+        setActiveView('routine');
+        setIsRoutineModalOpen(true);
+      }}
+    >
       {activeView === 'dashboard' && <DashboardView onNavigate={handleNavigate} />}
-      {activeView === 'board' && <JobBoard onSelectJob={handleSelectJob} />}
+      {activeView === 'board' && <JobBoard onSelectJob={handleSelectJob} onNavigate={handleNavigate} />}
       {activeView === 'add-job' && <AddJobView onJobAdded={() => handleNavigate('board')} onCancel={() => handleNavigate('board')} />}
-      {activeView === 'routine' && <RoutineView />}
+      {activeView === 'routine' && (
+        <RoutineView
+          onNavigate={handleNavigate}
+          isAddModalOpen={isRoutineModalOpen}
+          onSetAddModalOpen={setIsRoutineModalOpen}
+        />
+      )}
       {activeView === 'detail' && selectedJobId && (
         <JobDetail jobId={selectedJobId} onBack={() => handleNavigate('board')} />
       )}

@@ -356,9 +356,27 @@ export const StorageService = {
     // Settings (API Keys, etc)
     getSettings: () => {
         const data = localStorage.getItem('job_os_settings');
-        return data ? JSON.parse(data) : { aiProvider: 'gemini', apiKey: '', model: 'gemini-1.5-flash' };
+        const settings = data ? JSON.parse(data) : {
+            aiProvider: 'letsmcp', // Default to LetsMCP first
+            apiKey: '',
+            model: 'gemini-1.5-flash',
+            mcpUrl: '', // Default to relative path via proxy
+            mcpProvider: 'groq', // Default provider on MCP server
+        };
+
+        // Runtime patch: If URL is explicitly localhost:3002 (old default), clear it to use proxy
+        if (settings.mcpUrl === 'http://localhost:3002') {
+            settings.mcpUrl = '';
+        }
+        return settings;
     },
-    saveSettings: (settings: { aiProvider: string; apiKey: string; model?: string }) => {
+    saveSettings: (settings: {
+        aiProvider: string;
+        apiKey: string;
+        model?: string;
+        mcpUrl?: string;
+        mcpProvider?: string;
+    }) => {
         localStorage.setItem('job_os_settings', JSON.stringify(settings));
     }
 };

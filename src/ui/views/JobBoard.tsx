@@ -4,16 +4,15 @@ import type { Job } from '../../domain/job';
 import type { Application } from '../../domain/application';
 import type { Engagement } from '../../domain/engagement';
 import { getSuggestedAction } from '../../domain/application';
-import { ConfirmationModal } from '../components/ConfirmationModal';
-import { UserProfileModal } from '../components/UserProfileModal';
 import { SuggestionList } from '../components/SuggestionList';
-import { SettingsModal } from '../components/SettingsModal';
+import { AppHeader } from '../components/AppHeader';
 
 interface JobBoardProps {
     onSelectJob: (jobId: string) => void;
+    onNavigate: (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine') => void;
 }
 
-export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
+export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob, onNavigate }) => {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [applications, setApplications] = useState<Application[]>([]);
     const [engagements, setEngagements] = useState<Engagement[]>([]);
@@ -35,40 +34,13 @@ export const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
         return getSuggestedAction(effectiveApp);
     };
 
-    const [showProfileModal, setShowProfileModal] = useState(false);
-    const [showSettingsModal, setShowSettingsModal] = useState(false);
-
     return (
         <div>
-            <UserProfileModal
-                isOpen={showProfileModal}
-                onClose={() => setShowProfileModal(false)}
+            <AppHeader
+                title="Your Job Hunt"
+                onNavigate={onNavigate}
+                currentView="board"
             />
-
-            <SettingsModal
-                isOpen={showSettingsModal}
-                onClose={() => setShowSettingsModal(false)}
-            />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h1 style={{ marginBottom: 0 }}>Your Job Hunt</h1>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                        className="btn btn-outline"
-                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
-                        onClick={() => setShowSettingsModal(true)}
-                    >
-                        ⚙️ Settings
-                    </button>
-                    <button
-                        className="btn btn-outline"
-                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
-                        onClick={() => setShowProfileModal(true)}
-                    >
-                        👤 My Profile
-                    </button>
-                </div>
-            </div>
 
             <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
                 <div style={{ flex: 3 }}>

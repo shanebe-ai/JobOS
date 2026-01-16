@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StorageService } from '../../services/storage';
 import { GoogleGeminiProvider } from '../../services/ai/providers/gemini';
+import { LetsMCPProvider } from '../../services/ai/providers/letsmcp';
 import type { OutreachDraftContext } from '../../domain/ai';
 
 interface DraftMessageModalProps {
@@ -29,10 +30,6 @@ export const DraftMessageModal: React.FC<DraftMessageModalProps> = ({ context: i
         const { recipientName, recipientRole, companyName, intent, jobTitle, jobDescription } = ctx;
         const myName = StorageService.getUserProfile()?.name || '[My Name]';
 
-        // Simple logic to extract a key skill or term from Job Description if possible, else generic
-        // This is a "dumb" extraction for the template
-        const jdSnippet = jobDescription ? jobDescription.substring(0, 100) : '';
-
         switch (intent) {
             case 'FollowUp':
                 return `Subject: Following up on my application for ${jobTitle}\n\nHi ${recipientName},\n\nI hope you're having a great week.\n\nI recently applied for the ${jobTitle} role at ${companyName} and wanted to briefly reiterate my strong interest. Given my background, I am confident I can contribute immediately to the team's goals.\n\nI know you're busy, but I'd love the chance to discuss how my experience aligns with what you're looking for.\n\nBest regards,\n${myName}`;
@@ -52,58 +49,100 @@ export const DraftMessageModal: React.FC<DraftMessageModalProps> = ({ context: i
     const generate = async () => {
         setLoading(true);
         setError(null);
-        setRationale(''); // Clear previous rationale
+        setRationale('');
 
         try {
             const settings = StorageService.getSettings();
             const userProfile = StorageService.getUserProfile();
             const myName = userProfile?.name || 'Job Seeker';
 
-            // 1. Check for API Key - Immediate Fallback if missing
-            if (!settings.apiKey) {
-                console.warn('No API Key found, using template.');
-                setDraft(getFallbackTemplate(context));
-                setRationale("⚠️ OFFLINE MODE: Using Smart Template (No API Key configured).");
-                setLoading(false);
-                return;
+            // 1. Try LetsMCP first
+            if (settings.aiProvider === 'letsmcp' || !settings.apiKey) {
+                try {
+                    const mcpProvider = new LetsMCPProvider({
+                        baseUrl: settings.mcpUrl || '',
+                        provider: settings.mcpProvider as 'groq' | 'claude' | 'gemini',
+                    });
+
+                    const isAvailable = await mcpProvider.isAvailable();
+                    const hasAI = await mcpProvider.hasAIProvider();
+
+                    if (isAvailable && hasAI) {
+                        console.log('Attempting LetsMCP email draft...');
+                        const result = await mcpProvider.draftEmail({
+                            recipientName: context.recipientName,
+                            recipientRole: context.recipientRole,
+                            companyName: context.companyName,
+                            jobTitle: context.jobTitle,
+                            tone: context.tone,
+                            intent: context.intent,
+                            jobDescription: context.jobDescription,
+                        });
+
+                        if (result.body) {
+                            const emailText = result.subject
+                                ? `Subject: ${result.subject}\n\n${result.body}`
+                                : result.body;
+                            setDraft(emailText.trim());
+                            setRationale(`✨ AI Generated via LetsMCP (${settings.mcpProvider || 'groq'}) based on intent '${context.intent}'.`);
+                            setLoading(false);
+                            return;
+                        }
+                    }
+                    console.warn('LetsMCP unavailable or has no AI, trying Gemini...');
+                } catch (err) {
+                    console.warn('LetsMCP draft failed, falling back to Gemini:', err);
+                }
             }
 
-            const provider = new GoogleGeminiProvider(settings.apiKey, settings.model);
+            // 2. Try Gemini if API Key is configured
+            if (settings.apiKey) {
+                try {
+                    const provider = new GoogleGeminiProvider(settings.apiKey, settings.model);
 
-            const prompt = `
-            Act as an expert career coach and copywriter.
-            Write a cold outreach email.
-            
-            **Context:**
-            - **Sender Name:** ${myName}
-            - **Recipient:** ${context.recipientName} (${context.recipientRole}) at ${context.companyName}.
-            - **My Intent:** ${context.intent}
-            - **Job Target:** ${context.jobTitle}
-            - **Job Description Snippet:** "${context.jobDescription ? context.jobDescription.substring(0, 500) : 'N/A'}..."
-            
-            **Refined Instructions for Intent '${context.intent}':**
-            ${context.intent === 'Connect' ? '- Objective: Start a loose conversation. NOT asking for a job directly. Ask about their experience.' : ''}
-            ${context.intent === 'PeerOutreach' ? '- Objective: Connect with a future peer. NO cover letter vibes. Focus on shared interests, culture, or specific tech/work they do. Be casual.' : ''}
-            ${context.intent === 'ReferralRequest' ? '- Objective: Politely ask for a referral after establishing a reason why I am a good fit. Be humble but confident.' : ''}
-            ${context.intent === 'FollowUp' ? '- Objective: Professional nudge on a past application. Reiteration of interest. Professional tone.' : ''}
+                    const prompt = `
+                    Act as an expert career coach and copywriter.
+                    Write a cold outreach email.
 
-            **General Guidelines:**
-            1. Keep it concise (under 150 words).
-            2. Tone should be **${context.tone}** (Crucial!).
-            3. Sign off with: Best, [Sender Name]
-            
-            **Output:**
-            - Just the email body text. No subject line. No markdown wrapping.
-            `;
+                    **Context:**
+                    - **Sender Name:** ${myName}
+                    - **Recipient:** ${context.recipientName} (${context.recipientRole}) at ${context.companyName}.
+                    - **My Intent:** ${context.intent}
+                    - **Job Target:** ${context.jobTitle}
+                    - **Job Description Snippet:** "${context.jobDescription ? context.jobDescription.substring(0, 500) : 'N/A'}..."
 
-            const result = await provider.generateText(prompt);
-            setDraft(result.trim());
-            setRationale(`✨ AI Generated (${settings.model}) based on intent '${context.intent}'.`);
+                    **Refined Instructions for Intent '${context.intent}':**
+                    ${context.intent === 'Connect' ? '- Objective: Start a loose conversation. NOT asking for a job directly. Ask about their experience.' : ''}
+                    ${context.intent === 'PeerOutreach' ? '- Objective: Connect with a future peer. NO cover letter vibes. Focus on shared interests, culture, or specific tech/work they do. Be casual.' : ''}
+                    ${context.intent === 'ReferralRequest' ? '- Objective: Politely ask for a referral after establishing a reason why I am a good fit. Be humble but confident.' : ''}
+                    ${context.intent === 'FollowUp' ? '- Objective: Professional nudge on a past application. Reiteration of interest. Professional tone.' : ''}
+
+                    **General Guidelines:**
+                    1. Keep it concise (under 150 words).
+                    2. Tone should be **${context.tone}** (Crucial!).
+                    3. Sign off with: Best, [Sender Name]
+
+                    **Output:**
+                    - Just the email body text. No subject line. No markdown wrapping.
+                    `;
+
+                    const result = await provider.generateText(prompt);
+                    setDraft(result.trim());
+                    setRationale(`✨ AI Generated (Gemini ${settings.model}) based on intent '${context.intent}'.`);
+                    setLoading(false);
+                    return;
+                } catch (err: any) {
+                    console.warn('Gemini draft failed:', err);
+                }
+            }
+
+            // 3. Final fallback: Smart Template
+            console.warn('All AI providers failed, using template.');
+            setDraft(getFallbackTemplate(context));
+            setRationale("⚠️ OFFLINE MODE: Using Smart Template (AI unavailable).");
 
         } catch (err: any) {
             console.error('Generation Error:', err);
-
-            // 2. API Failure - Fallback to Template
             setDraft(getFallbackTemplate(context));
 
             let errorMsg = "Unknown Error";
@@ -111,9 +150,6 @@ export const DraftMessageModal: React.FC<DraftMessageModalProps> = ({ context: i
             if (errorMsg.includes('429')) errorMsg = "Quota Exceeded";
 
             setRationale(`⚠️ FALLBACK MODE: AI request failed (${errorMsg}). Used Smart Template instead.`);
-            // We do NOT set 'error' state here because we handled it gracefully with a fallback.
-            // But we might want to show a subtle toast or warning if desired. 
-            // The rationale field will serve as the indicator.
         } finally {
             setLoading(false);
         }

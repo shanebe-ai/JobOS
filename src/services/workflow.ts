@@ -1,6 +1,7 @@
 import { type Application, type ApplicationStatus, ALLOWED_TRANSITIONS } from '../domain/application';
 import type { Engagement } from '../domain/engagement';
 import { StorageService } from './storage';
+import { generateId } from '../utils/uuid';
 
 export const WorkflowService = {
     canTransition: (currentStatus: ApplicationStatus, targetStatus: ApplicationStatus): boolean => {
@@ -22,7 +23,7 @@ export const WorkflowService = {
 
         // Auto-Log Engagement
         const engagement: Engagement = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             applicationId: app.jobId, // Use jobId so it shows up in the Job log
             type: 'StatusChange',
             platform: 'Other', // System event
@@ -37,7 +38,7 @@ export const WorkflowService = {
 
     createApplication: (jobId: string): Application => {
         const newApp: Application = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             jobId,
             status: 'Saved',
             lastActionDate: new Date().toISOString(),

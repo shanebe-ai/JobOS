@@ -51,7 +51,10 @@ We replace the chaos of spreadsheets and disparate notes with a unified "Operati
     npm run dev
     ```
 
-4.  Open your browser at `http://localhost:5173` (or the URL shown in your terminal).
+4.  Open your browser at `http://localhost:8080` (or `http://localhost:5173`).
+    *   **Note**: The app is configured to proxy API requests from `/api` to the backend server at `http://localhost:3002`. Ensure `letsmcp` is running on port 3002.
+
+5.  **Important**: If you see connection errors, ensure `letsmcp` is running and accessible. The app uses a Vite proxy to bypass CORS and connect to the backend securely.
 
 ## 🧪 Running Tests
 

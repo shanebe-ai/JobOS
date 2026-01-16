@@ -16,6 +16,7 @@ import { ConfirmationModal } from '../components/ConfirmationModal';
 import { ResumeAnalyst } from '../components/ResumeAnalyst';
 import { ViewMessageModal } from '../components/ViewMessageModal';
 import type { OutreachDraftContext } from '../../domain/ai';
+import { generateId } from '../../utils/uuid';
 
 interface JobDetailProps {
     jobId: string;
@@ -31,6 +32,8 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
     const [artifacts, setArtifacts] = useState<Artifact[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [error, setError] = useState<string | null>(null);
+
     // UI State
     const [draftingContext, setDraftingContext] = useState<OutreachDraftContext | null>(null);
     const [draftBody, setDraftBody] = useState<string | undefined>(undefined);
@@ -39,26 +42,36 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
     const [viewMessage, setViewMessage] = useState<{ title: string; recipient: string; date: string; content: string } | null>(null);
 
     const refreshData = () => {
-        const jobs = StorageService.getJobs();
-        const apps = StorageService.getApplications();
-        const allEngagements = StorageService.getEngagements();
-        const allPeople = StorageService.getPeople();
-        const allArtifacts = StorageService.getArtifacts();
+        setLoading(true);
+        setError(null);
+        try {
+            const jobs = StorageService.getJobs();
+            const apps = StorageService.getApplications();
+            const allEngagements = StorageService.getEngagements();
+            const allPeople = StorageService.getPeople();
+            const allArtifacts = StorageService.getArtifacts();
 
-        const foundJob = jobs.find(j => j.id === jobId);
-        const foundApp = apps.find(a => a.jobId === jobId);
+            const foundJob = jobs.find(j => j.id === jobId);
+            const foundApp = apps.find(a => a.jobId === jobId);
 
-        if (foundJob && foundApp) {
-            setJob(foundJob);
-            setApp(foundApp);
-            setSuggestions(RecommendationService.getSuggestedActions(foundApp));
-            setEngagements(allEngagements);
-            // Filter contacts by company
-            const relevantContacts = allPeople.filter(p => p.company === foundJob.company);
-            setContacts(relevantContacts);
-            setArtifacts(allArtifacts);
+            if (foundJob && foundApp) {
+                setJob(foundJob);
+                setApp(foundApp);
+                setSuggestions(RecommendationService.getSuggestedActions(foundApp));
+                setEngagements(allEngagements);
+                // Filter contacts by company
+                const relevantContacts = allPeople.filter(p => p.company === foundJob.company);
+                setContacts(relevantContacts);
+                setArtifacts(allArtifacts);
+            } else {
+                setError(`Job or Application not found for ID: ${jobId}`);
+            }
+        } catch (e: any) {
+            console.error("Error loading job details:", e);
+            setError(`Failed to load job details: ${e.message}`);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     useEffect(() => {
@@ -78,8 +91,15 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
         }
     };
 
-    if (loading) return <div>Loading...</div>;
-    if (!job || !app) return <div>Job not found</div>;
+    if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading job details...</div>;
+    if (error) return (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+            <h2 style={{ color: '#ef4444' }}>Error</h2>
+            <p>{error}</p>
+            <button onClick={onBack} className="btn btn-primary">Go Back</button>
+        </div>
+    );
+    if (!job || !app) return <div>Job not found (Sync error)</div>;
 
     return (
         <div>
@@ -240,11 +260,10 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                     onSave={(msg: string, status: 'Draft' | 'Sent') => {
                         const artifactName = `${status === 'Draft' ? 'Draft' : 'Sent Email'}: ${draftingContext.recipientName} (${new Date().toLocaleDateString()})`;
 
-                        // If editing, reuse ID and createdDate. If new, generate fresh.
                         const existingArtifact = editingArtifactId ? artifacts.find(a => a.id === editingArtifactId) : null;
 
                         const newArtifact: Artifact = {
-                            id: editingArtifactId || crypto.randomUUID(),
+                            id: editingArtifactId || generateId(),
                             applicationId: jobId,
                             type: 'OutreachMessage',
                             name: artifactName,
@@ -258,7 +277,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                         if (status === 'Sent') {
                             const engagementType = draftingContext.intent === 'FollowUp' ? 'FollowUp' : 'Outreach';
                             const newEngagement: Engagement = {
-                                id: crypto.randomUUID(),
+                                id: generateId(),
                                 applicationId: jobId,
                                 date: new Date().toISOString(),
                                 type: engagementType,
