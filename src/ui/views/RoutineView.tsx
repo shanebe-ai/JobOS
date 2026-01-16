@@ -3,7 +3,7 @@ import { StorageService } from '../../services/storage';
 import type { Suggestion, SuggestionHistoryEntry } from '../../domain/suggestion';
 import { SuggestionModal } from '../components/SuggestionModal';
 import { SuggestionCard } from '../components/SuggestionCard';
-import { SuggestionCard } from '../components/SuggestionCard';
+
 
 import { AppHeader } from '../components/AppHeader';
 
