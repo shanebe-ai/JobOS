@@ -3,7 +3,7 @@ import { StorageService } from '../../services/storage';
 import type { Suggestion, SuggestionHistoryEntry } from '../../domain/suggestion';
 import { SuggestionModal } from '../components/SuggestionModal';
 import { SuggestionCard } from '../components/SuggestionCard';
-import { ConfirmationModal } from '../components/ConfirmationModal';
+import { SuggestionCard } from '../components/SuggestionCard';
 
 import { AppHeader } from '../components/AppHeader';
 
@@ -165,7 +165,6 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onNavigate, isAddModal
                         // Determine if it should be shown for TODAY
                         const todayStr = new Date().toDateString();
                         const nextDue = new Date(suggestion.nextDueDate);
-                        const isDueOrOverdue = nextDue <= new Date() || new Date(nextDue.toDateString()) <= new Date(new Date().toDateString());
 
                         // Check history for today's action
                         const lastAction = suggestion.history[0];

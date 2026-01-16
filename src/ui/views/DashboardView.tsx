@@ -8,7 +8,7 @@ import { SuggestionList } from '../components/SuggestionList';
 import { AppHeader } from '../components/AppHeader';
 
 interface DashboardViewProps {
-    onNavigate: (view: 'board' | 'add-job' | 'detail' | 'routine') => void;
+    onNavigate: (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine') => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
