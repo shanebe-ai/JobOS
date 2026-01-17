@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from './ui/layout/DashboardLayout';
 import { DashboardView } from './ui/views/DashboardView';
-import { JobBoard } from './ui/views/JobBoard';
+import JobBoard from './ui/views/JobBoard';
 import { AddJobView } from './ui/views/AddJobView';
 import { JobDetail } from './ui/views/JobDetail';
 import { RoutineView } from './ui/views/RoutineView';
+import { ExtensionInstallView } from './ui/views/ExtensionInstallView';
 // ... existing imports
 
 import { StorageService } from './services/storage';
 import './index.css';
 
 const App = () => {
-  const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'add-job' | 'detail' | 'routine'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'add-job' | 'detail' | 'routine' | 'extension-install'>('dashboard');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
 
@@ -19,7 +20,7 @@ const App = () => {
     StorageService.initialize();
   }, []);
 
-  const handleNavigate = (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine') => {
+  const handleNavigate = (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine' | 'extension-install') => {
     setActiveView(view);
     if (view !== 'detail') setSelectedJobId(null);
   };
@@ -51,6 +52,7 @@ const App = () => {
       {activeView === 'detail' && selectedJobId && (
         <JobDetail jobId={selectedJobId} onBack={() => handleNavigate('board')} />
       )}
+      {activeView === 'extension-install' && <ExtensionInstallView />}
     </DashboardLayout>
   );
 }

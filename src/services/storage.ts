@@ -38,8 +38,13 @@ export const StorageService = {
         set(STORAGE_KEYS.JOBS, jobs);
     },
     deleteJob: (id: string) => {
+        // Delete the job
         const jobs = get<Job>(STORAGE_KEYS.JOBS).filter(j => j.id !== id);
         set(STORAGE_KEYS.JOBS, jobs);
+
+        // Cascade delete: Remove associated application
+        const apps = get<Application>(STORAGE_KEYS.APPLICATIONS).filter(a => a.jobId !== id);
+        set(STORAGE_KEYS.APPLICATIONS, apps);
     },
 
     // Applications
@@ -120,6 +125,17 @@ export const StorageService = {
 
 
     initialize: (force: boolean = false) => {
+        // 1. Cleanup Orphans: Remove applications that point to non-existent jobs
+        const jobs = get<Job>(STORAGE_KEYS.JOBS);
+        const apps = get<Application>(STORAGE_KEYS.APPLICATIONS);
+        const jobIds = new Set(jobs.map(j => j.id));
+
+        const validApps = apps.filter(a => jobIds.has(a.jobId));
+        if (validApps.length !== apps.length) {
+            console.log(`JobOS: Cleaning up ${apps.length - validApps.length} orphaned applications.`);
+            set(STORAGE_KEYS.APPLICATIONS, validApps);
+        }
+
         if (force || !localStorage.getItem(STORAGE_KEYS.JOBS)) {
             const seedJobs: Job[] = [
                 {
