@@ -52,7 +52,20 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
             const allArtifacts = StorageService.getArtifacts();
 
             const foundJob = jobs.find(j => j.id === jobId);
-            const foundApp = apps.find(a => a.jobId === jobId);
+            let foundApp = apps.find(a => a.jobId === jobId);
+
+            if (foundJob && !foundApp) {
+                // Auto-create Application for scraped jobs
+                foundApp = {
+                    id: jobId,
+                    jobId: jobId,
+                    status: 'Saved',
+                    appliedDate: null,
+                    notes: '',
+                    archived: false
+                };
+                StorageService.saveApplication(foundApp);
+            }
 
             if (foundJob && foundApp) {
                 setJob(foundJob);
@@ -64,7 +77,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                 setContacts(relevantContacts);
                 setArtifacts(allArtifacts);
             } else {
-                setError(`Job or Application not found for ID: ${jobId}`);
+                setError(`Job not found for ID: ${jobId}`);
             }
         } catch (e: any) {
             console.error("Error loading job details:", e);
@@ -123,8 +136,9 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
 
                         <h3>Details</h3>
                         <p><strong>Location:</strong> {job.location}</p>
+                        {(job as any).workType && <p><strong>Work Type:</strong> {(job as any).workType}</p>}
                         <p><strong>Source:</strong> {job.source}</p>
-                        <div style={{ whiteSpace: 'pre-wrap', marginTop: '1rem' }}>{job.description}</div>
+                        <div style={{ whiteSpace: 'pre-wrap', marginTop: '1rem' }} dangerouslySetInnerHTML={{ __html: job.description }} />
                     </div>
 
                     {app.notes && (

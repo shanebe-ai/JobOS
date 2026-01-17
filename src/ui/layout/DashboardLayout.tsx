@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface DashboardLayoutProps {
-    activeView: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine';
-    onNavigate: (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine') => void;
+    activeView: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine' | 'extension-install';
+    onNavigate: (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine' | 'extension-install') => void;
     onAddCustomTask?: () => void;
     children: React.ReactNode;
 }
@@ -48,6 +48,38 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
                     >
                         + Custom Task
                     </button>
+                    <div style={{ padding: '0.5rem', borderTop: '1px solid #e2e8f0', marginTop: 'auto' }}>
+                        <a
+                            href="/jobos-linkedin-scraper.zip"
+                            download
+                            className="btn btn-outline"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'flex-start',
+                                border: 'none',
+                                textDecoration: 'none',
+                                fontSize: '0.85rem'
+                            }}
+                        >
+                            ⬇️ Download Extension
+                        </a>
+                        <button
+                            className={`btn ${activeView === 'extension-install' ? 'btn-primary' : 'btn-outline'}`}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'flex-start',
+                                border: 'none',
+                                width: '100%',
+                                marginTop: '0.5rem',
+                                fontSize: '0.85rem'
+                            }}
+                            onClick={() => onNavigate('extension-install')}
+                        >
+                            🧩 Install Guide
+                        </button>
+                    </div>
                 </nav>
             </aside>
             <main className="main-content">
