@@ -29,7 +29,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
         setImporting(true);
         setImportMsg('');
         try {
-            const res = await fetch('http://localhost:3002/api/profile');
+            const res = await fetch('/api/profile');
             const json = await res.json();
             if (!json.success || !json.profile) {
                 setImportMsg('No saved profile found. Visit your LinkedIn profile and click "Save Profile to JobOS" first.');
