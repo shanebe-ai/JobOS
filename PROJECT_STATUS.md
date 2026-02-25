@@ -53,11 +53,12 @@ The application has evolved into a robust "Job Search OS".
 ## 📝 Context Log for Next Session
 *Read this before starting work.*
 
-**Last Completed:** Chrome Extension & Streak Tracking (Phase 5).
-*   **Added:** LinkedIn Chrome Extension with smart page detection (only shows on `/jobs/view/` pages).
-*   **Added:** Streak tracking utility (`src/utils/streak.ts`) with fire emoji gamification.
-*   **Updated:** Dashboard to display current streak with motivational messages.
-*   **Updated:** Vite config for port 8080 with API proxy to letsmcp on port 3002.
+**Last Completed:** Chrome Extension location scraping & pipeline count fixes.
+*   **Fixed:** Chrome extension auto-creates a `Saved` Application on job sync — pipeline count is now accurate.
+*   **Fixed:** Active Pipeline metric now correctly excludes `Withdrawn` (previously only excluded `Rejected`).
+*   **Fixed:** Location scraping on `/jobs/view/` — post-company text scan avoids breadcrumb/nav text like "Home".
+*   **Fixed:** Location scraping splits on all LinkedIn separators (`·`, `•`, newlines) and filters metadata before taking first clean token.
+*   **Working:** Both `/jobs/collections/` and `/jobs/view/` correctly extract location (e.g. "Canada", "Toronto, Canada").
 
 **Next Priority:** **Interview Prep Workspace**.
 *   **STAR Story Bank:** Create a dedicated section to write and tag stories for behavioral questions.

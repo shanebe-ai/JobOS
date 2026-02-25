@@ -108,7 +108,22 @@ const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
                 const newJobs = data.data.filter((j: Job) => !currentIds.has(j.id));
 
                 if (newJobs.length > 0) {
-                    newJobs.forEach((job: Job) => StorageService.saveJob(job));
+                    newJobs.forEach((job: Job) => {
+                        StorageService.saveJob(job);
+                        // Auto-create a Saved application so it appears in the pipeline
+                        const existingApp = StorageService.getApplications().find(a => a.jobId === job.id);
+                        if (!existingApp) {
+                            const app: Application = {
+                                id: `app-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                jobId: job.id,
+                                status: 'Saved',
+                                notes: '',
+                                lastActionDate: new Date().toISOString(),
+                                archived: false
+                            };
+                            StorageService.saveApplication(app);
+                        }
+                    });
                     loadJobs();
                 }
             }
