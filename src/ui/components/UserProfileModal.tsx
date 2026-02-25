@@ -14,15 +14,41 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
         aboutMe: '',
         skills: [],
     });
+    const [importing, setImporting] = useState(false);
+    const [importMsg, setImportMsg] = useState('');
 
     useEffect(() => {
         if (isOpen) {
             const saved = StorageService.getUserProfile();
-            if (saved) {
-                setProfile(saved);
-            }
+            if (saved) setProfile(saved);
+            setImportMsg('');
         }
     }, [isOpen]);
+
+    const handleImportFromLinkedIn = async () => {
+        setImporting(true);
+        setImportMsg('');
+        try {
+            const res = await fetch('http://localhost:3002/api/profile');
+            const json = await res.json();
+            if (!json.success || !json.profile) {
+                setImportMsg('No saved profile found. Visit your LinkedIn profile and click "Save Profile to JobOS" first.');
+                return;
+            }
+            const p = json.profile;
+            setProfile(prev => ({
+                ...prev,
+                name: p.name || prev.name,
+                aboutMe: p.summary || prev.aboutMe,
+                skills: p.skills?.length ? p.skills : prev.skills,
+            }));
+            setImportMsg(`✓ Imported from LinkedIn${p.headline ? ` — ${p.headline}` : ''}`);
+        } catch {
+            setImportMsg('Could not reach letsmcp. Make sure it is running on port 3002.');
+        } finally {
+            setImporting(false);
+        }
+    };
 
     const handleSave = () => {
         StorageService.saveUserProfile(profile);
@@ -53,6 +79,24 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
                 <div style={{ display: 'grid', gap: '1rem' }}>
                     <div className="alert alert-info">
                         This information provides "Global Context" for the AI. Fill this out so the AI knows who you are when drafting emails and analyzing matches.
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
+                        <div style={{ flex: 1, fontSize: '0.875rem' }}>
+                            <strong>Import from LinkedIn</strong>
+                            <p style={{ margin: '0.15rem 0 0', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                                Go to your LinkedIn profile, click the blue "Save Profile to JobOS" button, then import here.
+                            </p>
+                            {importMsg && <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem', color: importMsg.startsWith('✓') ? '#0369a1' : '#ef4444' }}>{importMsg}</p>}
+                        </div>
+                        <button
+                            className="btn btn-outline"
+                            style={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}
+                            onClick={handleImportFromLinkedIn}
+                            disabled={importing}
+                        >
+                            {importing ? 'Importing...' : '⬇ Import'}
+                        </button>
                     </div>
 
                     <div>
