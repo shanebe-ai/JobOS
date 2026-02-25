@@ -131,6 +131,7 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onNavigate, isAddModal
         <div>
             <AppHeader
                 title="My Routine"
+                subtitle="Build your habits, stay consistent"
                 onNavigate={onNavigate}
                 currentView="routine"
             />

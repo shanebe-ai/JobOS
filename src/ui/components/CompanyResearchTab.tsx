@@ -26,7 +26,9 @@ export const CompanyResearchTab: React.FC<CompanyResearchTabProps> = ({ jobId, c
     const [saved, setSaved] = useState(false);
     const [loading, setLoading] = useState(false);
     const [aiError, setAiError] = useState<string | null>(null);
-    const [urlInput, setUrlInput] = useState(companyUrl || '');
+    // Don't pre-fill LinkedIn/job URLs — those are useless for company research
+    const isJobUrl = companyUrl && (companyUrl.includes('linkedin.com') || companyUrl.includes('/jobs/'));
+    const [urlInput, setUrlInput] = useState(isJobUrl ? '' : (companyUrl || ''));
 
     useEffect(() => {
         const existing = StorageService.getCompanyResearch(jobId);
@@ -134,9 +136,13 @@ export const CompanyResearchTab: React.FC<CompanyResearchTabProps> = ({ jobId, c
                 </div>
             </div>
 
+            <div style={{ marginBottom: '0.75rem', padding: '0.5rem 0.75rem', background: '#f1f5f9', borderRadius: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                AI Research uses the company name to generate a knowledge summary. Optionally provide the company's <strong>homepage URL</strong> (e.g. <code>https://biorender.com</code>) — not a LinkedIn or job URL — to improve accuracy.
+            </div>
+
             {aiError && (
                 <div style={{ padding: '0.5rem 1rem', background: '#fee2e2', color: '#991b1b', borderRadius: '6px', marginBottom: '1rem', fontSize: '0.875rem' }}>
-                    {aiError} — Make sure letsmcp is running and has an AI provider configured.
+                    Error: {aiError}
                 </div>
             )}
 
