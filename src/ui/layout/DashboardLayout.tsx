@@ -50,7 +50,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, acti
                     </button>
                     <div style={{ padding: '0.5rem', borderTop: '1px solid #e2e8f0', marginTop: 'auto' }}>
                         <a
-                            href="/jobos-linkedin-scraper.zip"
+                            href="/LinkedInJobOS.zip"
                             download
                             className="btn btn-outline"
                             style={{
