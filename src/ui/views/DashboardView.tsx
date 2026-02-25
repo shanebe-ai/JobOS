@@ -53,8 +53,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     const dailyGoalProgress = Math.min((appsAppliedToday / dailyGoalTarget) * 100, 100);
 
     // 2. Pulse Metrics
-    const activeAppsCount = applications.filter(a => !a.archived && a.status !== 'Rejected').length;
+    // Active pipeline = not archived, not rejected, not withdrawn
+    const activeAppsCount = applications.filter(a =>
+        !a.archived &&
+        a.status !== 'Rejected' &&
+        a.status !== 'Withdrawn'
+    ).length;
     const interviewCount = applications.filter(a => a.status === 'Interviewing' || a.status === 'Offer').length;
+
+    // Count of jobs waiting in the extension queue (not yet imported)
+    const pendingJobsCount = jobs.filter(j =>
+        !applications.some(a => a.jobId === j.id)
+    ).length;
 
     // Response Rate: (Interviews + Offers) / (Applied + Interview + Offer + Rejected) * 100
     // We exclude 'Saved' and 'OutreachStarted' from the denominator as they haven't been "applied" yet technically, 
@@ -129,7 +139,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
                 <div className="card">
                     <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', color: 'var(--text-secondary)' }}>Active Pipeline</h3>
                     <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{activeAppsCount}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Applications in progress</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        Applications in progress
+                        {pendingJobsCount > 0 && (
+                            <span style={{ color: 'var(--primary-color)', marginLeft: '0.5rem' }}>
+                                (+{pendingJobsCount} pending import)
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="card">
