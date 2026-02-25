@@ -178,4 +178,35 @@ export class LetsMCPProvider implements AIService {
         const data = await response.json();
         return data.data;
     }
+
+    /**
+     * Parse a job description into structured data
+     */
+    async parseJobDescription(description: string): Promise<{
+        requiredSkills: string[];
+        niceToHaveSkills: string[];
+        experienceLevel: string;
+        responsibilities: string[];
+        techStack: string[];
+        redFlags: string[];
+        companyCulture: string[];
+        compensationHints: string;
+    }> {
+        const response = await fetch(`${this.baseUrl}/api/parse-jd`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                description,
+                provider: this.preferredProvider,
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: response.statusText }));
+            throw new Error(error.error || 'LetsMCP JD parse failed');
+        }
+
+        const data = await response.json();
+        return data.data;
+    }
 }

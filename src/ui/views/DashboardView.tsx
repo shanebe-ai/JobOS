@@ -7,12 +7,14 @@ import type { UserProfile } from '../../domain/user';
 import { SuggestionList } from '../components/SuggestionList';
 import { AppHeader } from '../components/AppHeader';
 import { calculateCurrentStreak, hasAppliedToday, getStreakMessage, getStreakEmoji } from '../../utils/streak';
+import { isStalled } from '../../domain/application';
 
 interface DashboardViewProps {
     onNavigate: (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine') => void;
+    onSelectJob?: (id: string) => void;
 }
 
-export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
+export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, onSelectJob }) => {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [applications, setApplications] = useState<Application[]>([]);
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -91,7 +93,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         }
     }, [currentStreak, bestStreak]);
 
-    // 4. Recent Activity (Last 5)
+    // 4. Stalled Applications
+    const stalledApps = applications.filter(app => isStalled(app));
+    const stalledWithJobs = stalledApps.map(app => ({
+        app,
+        job: jobs.find(j => j.id === app.jobId),
+    })).filter(({ job }) => !!job);
+
+    // 5. Recent Activity (Last 5)
     // We need to hydrate engagement descriptions with job/person names if possible, but EngagementLog handles that.
     // Here we just list them.
     const recentActivity = [...engagements]
@@ -190,6 +199,52 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
                     )}
                 </div>
             </div>
+
+            {/* Follow-Up Reminders */}
+            {stalledWithJobs.length > 0 && (
+                <div style={{ marginBottom: '2rem' }}>
+                    <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: '#b45309' }}>
+                        ⏰ Follow-Up Needed ({stalledWithJobs.length})
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {stalledWithJobs.map(({ app, job }) => {
+                            const daysSince = Math.ceil(
+                                Math.abs(new Date().getTime() - new Date(app.lastActionDate).getTime()) / (1000 * 60 * 60 * 24)
+                            );
+                            return (
+                                <div key={app.id} className="card" style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '0.75rem 1rem',
+                                    borderLeft: '4px solid #f59e0b',
+                                    background: '#fffbeb'
+                                }}>
+                                    <div>
+                                        <span style={{ fontWeight: 600 }}>{job!.title}</span>
+                                        <span style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>@ {job!.company}</span>
+                                        <span style={{ fontSize: '0.8rem', color: '#b45309', marginLeft: '0.75rem' }}>
+                                            No activity for {daysSince} days
+                                        </span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        <span className="badge" style={{ background: '#fef3c7', color: '#92400e' }}>{app.status}</span>
+                                        {onSelectJob && (
+                                            <button
+                                                className="btn btn-outline"
+                                                style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+                                                onClick={() => onSelectJob(job!.id)}
+                                            >
+                                                Follow Up →
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Central Layout: Focus (Left) & Activity (Right) */}
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '2rem' }}>

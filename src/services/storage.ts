@@ -5,6 +5,8 @@ import type { Person } from '../domain/person';
 import type { Action } from '../domain/action';
 import type { Engagement } from '../domain/engagement';
 import type { Artifact } from '../domain/artifact';
+import type { CompanyResearchData } from '../domain/research';
+import type { StarStory } from '../domain/star';
 
 const STORAGE_KEYS = {
     JOBS: 'job_os_jobs',
@@ -16,6 +18,8 @@ const STORAGE_KEYS = {
     USER_PROFILE: 'job_os_user_profile',
     SUGGESTIONS: 'job_os_suggestions',
     STREAK_DATA: 'job_os_streak_data',
+    COMPANY_RESEARCH: 'job_os_company_research',
+    STAR_STORIES: 'job_os_star_stories',
 };
 
 // Streak data interface for persistence
@@ -315,6 +319,8 @@ export const StorageService = {
         set(STORAGE_KEYS.ENGAGEMENTS, []);
         set(STORAGE_KEYS.ARTIFACTS, []);
         set(STORAGE_KEYS.SUGGESTIONS, []);
+        set(STORAGE_KEYS.COMPANY_RESEARCH, []);
+        set(STORAGE_KEYS.STAR_STORIES, []);
 
         // Clear singletons/settings
         localStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
@@ -382,6 +388,35 @@ export const StorageService = {
             console.error("Import failed:", e);
             return false;
         }
+    },
+
+    // Company Research
+    getCompanyResearch: (jobId: string): CompanyResearchData | null => {
+        const all = get<CompanyResearchData>(STORAGE_KEYS.COMPANY_RESEARCH);
+        return all.find(r => r.jobId === jobId) || null;
+    },
+    saveCompanyResearch: (research: CompanyResearchData) => {
+        const all = get<CompanyResearchData>(STORAGE_KEYS.COMPANY_RESEARCH);
+        const idx = all.findIndex(r => r.jobId === research.jobId);
+        if (idx >= 0) all[idx] = research;
+        else all.push(research);
+        set(STORAGE_KEYS.COMPANY_RESEARCH, all);
+    },
+
+    // STAR Stories
+    getStarStories: (jobId: string): StarStory[] => {
+        return get<StarStory>(STORAGE_KEYS.STAR_STORIES).filter(s => s.jobId === jobId);
+    },
+    saveStarStory: (story: StarStory) => {
+        const all = get<StarStory>(STORAGE_KEYS.STAR_STORIES);
+        const idx = all.findIndex(s => s.id === story.id);
+        if (idx >= 0) all[idx] = story;
+        else all.push(story);
+        set(STORAGE_KEYS.STAR_STORIES, all);
+    },
+    deleteStarStory: (id: string) => {
+        const all = get<StarStory>(STORAGE_KEYS.STAR_STORIES).filter(s => s.id !== id);
+        set(STORAGE_KEYS.STAR_STORIES, all);
     },
 
     // Settings (API Keys, etc)

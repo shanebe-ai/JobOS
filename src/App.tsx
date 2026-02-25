@@ -39,7 +39,7 @@ const App = () => {
         setIsRoutineModalOpen(true);
       }}
     >
-      {activeView === 'dashboard' && <DashboardView onNavigate={handleNavigate} />}
+      {activeView === 'dashboard' && <DashboardView onNavigate={handleNavigate} onSelectJob={handleSelectJob} />}
       {activeView === 'board' && <JobBoard onSelectJob={handleSelectJob} onNavigate={handleNavigate} />}
       {activeView === 'add-job' && <AddJobView onJobAdded={() => handleNavigate('board')} onCancel={() => handleNavigate('board')} />}
       {activeView === 'routine' && (

@@ -145,6 +145,18 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
         e.preventDefault();
         if (!formData.title || !formData.company) return;
 
+        // Duplicate detection: check by title + company (case-insensitive)
+        const existingJobs = StorageService.getJobs();
+        const duplicate = existingJobs.find(j =>
+            j.title.toLowerCase() === formData.title!.toLowerCase() &&
+            j.company.toLowerCase() === formData.company!.toLowerCase()
+        );
+        if (duplicate) {
+            if (!confirm(`A job titled "${formData.title}" at "${formData.company}" already exists in your board. Add it anyway?`)) {
+                return;
+            }
+        }
+
         const newJob: Job = {
             id: generateId(),
             title: formData.title,
