@@ -15,6 +15,8 @@ import { DraftMessageModal } from '../components/DraftMessageModal';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { ResumeAnalyst } from '../components/ResumeAnalyst';
 import { ViewMessageModal } from '../components/ViewMessageModal';
+import { CompanyResearchTab } from '../components/CompanyResearchTab';
+import { InterviewPrepTab } from '../components/InterviewPrepTab';
 import type { OutreachDraftContext } from '../../domain/ai';
 import { generateId } from '../../utils/uuid';
 
@@ -33,6 +35,9 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
     const [loading, setLoading] = useState(true);
 
     const [error, setError] = useState<string | null>(null);
+
+    // Tab State
+    const [activeTab, setActiveTab] = useState<'overview' | 'research' | 'prep'>('overview');
 
     // UI State
     const [draftingContext, setDraftingContext] = useState<OutreachDraftContext | null>(null);
@@ -119,7 +124,49 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
         <div>
             <button onClick={onBack} className="btn btn-outline" style={{ marginBottom: '1rem' }}>← Back</button>
 
-            <div style={{ display: 'flex', gap: '2rem' }}>
+            {/* Tab Navigation */}
+            <div style={{ display: 'flex', gap: '0', borderBottom: '2px solid var(--border-color)', marginBottom: '1.5rem' }}>
+                {(['overview', 'research', 'prep'] as const).map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        style={{
+                            padding: '0.6rem 1.25rem',
+                            border: 'none',
+                            background: 'none',
+                            cursor: 'pointer',
+                            fontWeight: activeTab === tab ? 700 : 400,
+                            color: activeTab === tab ? 'var(--primary-color)' : 'var(--text-secondary)',
+                            borderBottom: activeTab === tab ? '2px solid var(--primary-color)' : '2px solid transparent',
+                            marginBottom: '-2px',
+                            fontSize: '0.9rem',
+                            transition: 'all 0.15s',
+                        }}
+                    >
+                        {tab === 'overview' && 'Overview'}
+                        {tab === 'research' && 'Company Research'}
+                        {tab === 'prep' && 'Interview Prep'}
+                    </button>
+                ))}
+            </div>
+
+            {activeTab === 'research' && (
+                <CompanyResearchTab
+                    jobId={jobId}
+                    companyName={job.company}
+                    companyUrl={(job as any).url}
+                />
+            )}
+
+            {activeTab === 'prep' && (
+                <InterviewPrepTab
+                    jobId={jobId}
+                    jobTitle={job.title}
+                    jobDescription={job.description}
+                />
+            )}
+
+            {activeTab === 'overview' && <div style={{ display: 'flex', gap: '2rem' }}>
                 <div style={{ flex: 2 }}>
                     <div className="card">
                         <h1 style={{ marginTop: 0 }}>{job.title}</h1>
@@ -265,7 +312,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                         <ResumeAnalyst jobDescription={job.description} artifacts={artifacts} />
                     </div>
                 </div>
-            </div>
+            </div>}
 
             {draftingContext && (
                 <DraftMessageModal
