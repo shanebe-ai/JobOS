@@ -6,6 +6,7 @@ import type { Engagement } from '../../domain/engagement';
 import type { UserProfile } from '../../domain/user';
 import { SuggestionList } from '../components/SuggestionList';
 import { AppHeader } from '../components/AppHeader';
+import { calculateCurrentStreak, hasAppliedToday, getStreakMessage, getStreakEmoji } from '../../utils/streak';
 
 interface DashboardViewProps {
     onNavigate: (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine') => void;
@@ -17,6 +18,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [engagements, setEngagements] = useState<Engagement[]>([]);
     const [greeting, setGreeting] = useState('');
+    const [bestStreak, setBestStreak] = useState<number>(0);
 
     useEffect(() => {
         // Load Data
@@ -25,6 +27,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         setApplications(StorageService.getApplications());
         setJobs(StorageService.getJobs());
         setEngagements(StorageService.getEngagements());
+
+        // Load streak data
+        const streakData = StorageService.getStreakData();
+        setBestStreak(streakData.bestStreak);
 
         // Set Greeting
         const hour = new Date().getHours();
@@ -58,8 +64,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         ? Math.round((interviewCount / appliedAppsCount) * 100)
         : 0;
 
-    // 3. Recent Activity (Last 5)
-    // We need to hydrate engagement descriptions with job/person names if possible, but EngagementLog handles that. 
+    // 3. Streak Tracking
+    const currentStreak = calculateCurrentStreak(applications);
+    const appliedToday = hasAppliedToday(applications);
+    const streakMessage = getStreakMessage(currentStreak, appliedToday);
+    const streakEmoji = getStreakEmoji(currentStreak);
+
+    // Update best streak if current exceeds it
+    useEffect(() => {
+        if (currentStreak > bestStreak) {
+            setBestStreak(currentStreak);
+            StorageService.saveStreakData({
+                bestStreak: currentStreak,
+                bestStreakDate: new Date().toISOString()
+            });
+        }
+    }, [currentStreak, bestStreak]);
+
+    // 4. Recent Activity (Last 5)
+    // We need to hydrate engagement descriptions with job/person names if possible, but EngagementLog handles that.
     // Here we just list them.
     const recentActivity = [...engagements]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -113,6 +136,41 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
                     <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', color: 'var(--text-secondary)' }}>Response Rate</h3>
                     <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{responseRate}%</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{(interviewCount)} Interviews / Offers</div>
+                </div>
+
+                {/* Streak Widget */}
+                <div className="card" style={{
+                    borderLeft: currentStreak > 0 ? '4px solid var(--warning-color)' : '4px solid var(--border-color)',
+                    background: currentStreak >= 7 ? 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' : 'var(--surface-color)'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-secondary)' }}>
+                            Application Streak
+                        </h3>
+                        <span style={{ fontSize: '1.5rem' }}>{streakEmoji}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: currentStreak > 0 ? 'var(--warning-color)' : 'var(--text-secondary)' }}>
+                            {currentStreak}
+                        </span>
+                        <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
+                            {currentStreak === 1 ? 'day' : 'days'}
+                        </span>
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                        {streakMessage}
+                    </div>
+                    {bestStreak > 0 && bestStreak > currentStreak && (
+                        <div style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-secondary)',
+                            marginTop: '0.5rem',
+                            paddingTop: '0.5rem',
+                            borderTop: '1px solid var(--border-color)'
+                        }}>
+                            Best: {bestStreak} days
+                        </div>
+                    )}
                 </div>
             </div>
 

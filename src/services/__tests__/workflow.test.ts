@@ -7,6 +7,7 @@ import { type Application } from '../../domain/application';
 vi.mock('../storage', () => ({
     StorageService: {
         saveApplication: vi.fn(),
+        saveEngagement: vi.fn(),
     }
 }));
 

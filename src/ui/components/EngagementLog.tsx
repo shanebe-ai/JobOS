@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { type Engagement, type EngagementType } from '../../domain/engagement';
 import { StorageService } from '../../services/storage';
-
+import { generateId } from '../../utils/uuid';
 import type { Person } from '../../domain/person';
 
 interface EngagementLogProps {
@@ -25,7 +25,7 @@ export const EngagementLog: React.FC<EngagementLogProps> = ({ jobId, engagements
         if (!formData.description) return;
 
         const newEngagement: Engagement = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             applicationId: jobId, // Link to job if provided
             personId: formData.personId || undefined,
             type: formData.type as EngagementType,

@@ -60,7 +60,8 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                     id: jobId,
                     jobId: jobId,
                     status: 'Saved',
-                    appliedDate: null,
+                    appliedDate: undefined,
+                    lastActionDate: new Date().toISOString(),
                     notes: '',
                     archived: false
                 };

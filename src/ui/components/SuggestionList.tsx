@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StorageService } from '../../services/storage';
+import { generateId } from '../../utils/uuid';
 import type { Suggestion, SuggestionHistoryEntry } from '../../domain/suggestion';
 import { SuggestionCard } from './SuggestionCard';
 import { SuggestionModal } from './SuggestionModal';
@@ -39,7 +40,7 @@ export const SuggestionList: React.FC = () => {
         } else {
             // New
             const newSuggestion: Suggestion = {
-                id: crypto.randomUUID(),
+                id: generateId(),
                 title: suggestionData.title!,
                 description: suggestionData.description,
                 frequency: suggestionData.frequency!,
