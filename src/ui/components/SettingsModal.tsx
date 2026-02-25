@@ -97,7 +97,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         window.location.reload();
     };
 
-    const handleEraseAll = () => {
+    const handleEraseAll = async () => {
+        // Clear backend job queue first to prevent re-sync
+        try {
+            await fetch('/api/jobs', { method: 'DELETE' });
+        } catch (error) {
+            console.error('Failed to clear backend jobs:', error);
+        }
+
         StorageService.clearAll();
         // Maybe preserve settings? The user said "erase all data", implying a fresh start.
         // Usually safe to wipe everything for a true hard reset.

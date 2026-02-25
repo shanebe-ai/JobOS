@@ -15,7 +15,14 @@ const STORAGE_KEYS = {
     ARTIFACTS: 'job_os_artifacts',
     USER_PROFILE: 'job_os_user_profile',
     SUGGESTIONS: 'job_os_suggestions',
+    STREAK_DATA: 'job_os_streak_data',
 };
+
+// Streak data interface for persistence
+export interface PersistedStreakData {
+    bestStreak: number;
+    bestStreakDate: string;
+}
 
 // Generic helper to get/set
 const get = <T>(key: string): T[] => {
@@ -122,7 +129,14 @@ export const StorageService = {
         set(STORAGE_KEYS.SUGGESTIONS, suggestions);
     },
 
-
+    // Streak Data
+    getStreakData: (): PersistedStreakData => {
+        const data = localStorage.getItem(STORAGE_KEYS.STREAK_DATA);
+        return data ? JSON.parse(data) : { bestStreak: 0, bestStreakDate: '' };
+    },
+    saveStreakData: (data: PersistedStreakData) => {
+        localStorage.setItem(STORAGE_KEYS.STREAK_DATA, JSON.stringify(data));
+    },
 
     initialize: (force: boolean = false) => {
         // 1. Cleanup Orphans: Remove applications that point to non-existent jobs
@@ -304,6 +318,7 @@ export const StorageService = {
 
         // Clear singletons/settings
         localStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
+        localStorage.removeItem(STORAGE_KEYS.STREAK_DATA);
         localStorage.removeItem('job_os_settings');
     },
 

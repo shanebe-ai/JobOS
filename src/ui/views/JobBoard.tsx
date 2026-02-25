@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StorageService } from '../../services/storage';
 import type { Job } from '../../domain/job';
+import type { Application } from '../../domain/application';
 
 // Inline Icons
 const Icons = {
@@ -36,24 +37,46 @@ const API_URL = '/api/jobs';
 
 interface JobBoardProps {
     onSelectJob: (id: string) => void;
-    onNavigate: (view: string) => void;
+    onNavigate: (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine' | 'extension-install') => void;
 }
 
-const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob, onNavigate }) => {
+const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
     const [jobs, setJobs] = useState<Job[]>([]);
+    const [applications, setApplications] = useState<Application[]>([]);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
 
     const loadJobs = useCallback(() => {
         try {
             const storedJobs = StorageService.getJobs();
+            const storedApps = StorageService.getApplications();
             setJobs(storedJobs);
+            setApplications(storedApps);
         } catch (e) {
             console.error('Failed to load jobs', e);
         } finally {
             setLoading(false);
         }
     }, []);
+
+    const getApplicationForJob = (jobId: string): Application | undefined => {
+        return applications.find(app => app.jobId === jobId);
+    };
+
+    const getStatusBadge = (status: string | undefined) => {
+        const styles: Record<string, { bg: string; color: string }> = {
+            'Saved': { bg: '#dbeafe', color: '#1e40af' },
+            'Applied': { bg: '#dcfce7', color: '#166534' },
+            'OutreachStarted': { bg: '#fef3c7', color: '#92400e' },
+            'Interviewing': { bg: '#e0e7ff', color: '#3730a3' },
+            'Offer': { bg: '#d1fae5', color: '#065f46' },
+            'Rejected': { bg: '#fee2e2', color: '#991b1b' },
+            'Stalled': { bg: '#f3f4f6', color: '#6b7280' },
+            'Withdrawn': { bg: '#f3f4f6', color: '#6b7280' },
+        };
+        const style = styles[status || 'Saved'] || styles['Saved'];
+        return { label: status || 'New', ...style };
+    };
 
     const deleteJob = async (id: string) => {
         if (!confirm("Are you sure you want to remove this job?")) return;
@@ -169,7 +192,12 @@ const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob, onNavigate }) => {
                         </p>
                     </div>
                 ) : (
-                    jobs.map((job) => (
+                    jobs.map((job) => {
+                        const app = getApplicationForJob(job.id);
+                        const statusBadge = getStatusBadge(app?.status);
+                        const hasApplied = app && ['Applied', 'OutreachStarted', 'Interviewing', 'Offer'].includes(app.status);
+
+                        return (
                         <div key={job.id} className="card" style={{
                             display: 'flex',
                             flexDirection: 'column',
@@ -188,8 +216,8 @@ const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob, onNavigate }) => {
                                 if (deleteBtn) deleteBtn.style.opacity = '0';
                             }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <span className="badge" style={{ background: '#dbeafe', color: '#1e40af' }}>
-                                    New
+                                <span className="badge" style={{ background: statusBadge.bg, color: statusBadge.color }}>
+                                    {statusBadge.label}
                                 </span>
                                 <button
                                     className="delete-btn"
@@ -277,24 +305,45 @@ const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob, onNavigate }) => {
                                     <Icons.Clock style={{ width: '12px', height: '12px' }} />
                                     <span>{job.scrapedAt ? new Date(job.scrapedAt).toLocaleDateString() : 'Just now'}</span>
                                 </div>
-                                <a
-                                    href={job.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        fontWeight: '500',
-                                        color: 'var(--primary-color)',
-                                        textDecoration: 'none',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.25rem'
-                                    }}
-                                >
-                                    Apply <span style={{ fontSize: '10px' }}>↗</span>
-                                </a>
+                                {hasApplied ? (
+                                    <button
+                                        onClick={() => onSelectJob(job.id)}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            padding: 0,
+                                            fontWeight: '500',
+                                            color: 'var(--primary-color)',
+                                            textDecoration: 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.25rem',
+                                            cursor: 'pointer',
+                                            fontSize: '0.75rem'
+                                        }}
+                                    >
+                                        View Details →
+                                    </button>
+                                ) : (
+                                    <a
+                                        href={job.url || job.originalLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            fontWeight: '500',
+                                            color: 'var(--primary-color)',
+                                            textDecoration: 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.25rem'
+                                        }}
+                                    >
+                                        Apply <span style={{ fontSize: '10px' }}>↗</span>
+                                    </a>
+                                )}
                             </div>
                         </div>
-                    ))
+                    );})
                 )}
             </div>
         </div>

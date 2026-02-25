@@ -3,6 +3,7 @@ import { type Artifact, type ArtifactType } from '../../domain/artifact';
 import { StorageService } from '../../services/storage';
 import { FileExtractionService } from '../../services/fileExtraction';
 import { ConfirmationModal } from './ConfirmationModal';
+import { generateId } from '../../utils/uuid';
 
 interface ArtifactListProps {
     jobId?: string;
@@ -12,7 +13,7 @@ interface ArtifactListProps {
     jobDescription?: string;
 }
 
-export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, onUpdate, onSelect, jobDescription }) => {
+export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, onUpdate, onSelect, jobDescription: _jobDescription }) => {
     const [isAdding, setIsAdding] = useState(false);
     const [artifactToDelete, setArtifactToDelete] = useState<string | null>(null);
     const [isExtracting, setIsExtracting] = useState(false);
@@ -36,7 +37,7 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
         if (!formData.name) return;
 
         const newArtifact: Artifact = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             applicationId: jobId,
             type: formData.type as ArtifactType,
             name: formData.name,

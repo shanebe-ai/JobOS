@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StorageService } from '../../services/storage';
+import { generateId } from '../../utils/uuid';
 import type { Suggestion, SuggestionHistoryEntry } from '../../domain/suggestion';
 import { SuggestionModal } from '../components/SuggestionModal';
 import { SuggestionCard } from '../components/SuggestionCard';
@@ -36,7 +37,7 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onNavigate, isAddModal
             StorageService.saveSuggestion(updated);
         } else {
             const newSuggestion: Suggestion = {
-                id: crypto.randomUUID(),
+                id: generateId(),
                 title: suggestionData.title!,
                 description: suggestionData.description,
                 frequency: suggestionData.frequency!,

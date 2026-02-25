@@ -27,7 +27,7 @@ export const DraftMessageModal: React.FC<DraftMessageModalProps> = ({ context: i
 
     // Smart Templates System (Offline Fallback)
     const getFallbackTemplate = (ctx: OutreachDraftContext): string => {
-        const { recipientName, recipientRole, companyName, intent, jobTitle, jobDescription } = ctx;
+        const { recipientName, recipientRole, companyName, intent, jobTitle } = ctx;
         const myName = StorageService.getUserProfile()?.name || '[My Name]';
 
         switch (intent) {

@@ -2,12 +2,14 @@
 
 > **Core Philosophy:** Finding a job is a job. JobOS is the workspace for that job.
 
-## 🟢 Current Status: Beta 2.0
+## 🟢 Current Status: Beta 2.1
 The application has evolved into a robust "Job Search OS".
 **Key New Features:**
 *   **Daily Dashboard:** A "Command Center" home view with daily goals (3 apps/day), pipeline pulse, and focus tracking.
 *   **Data Resilience:** Full JSON Export/Import capabilities and "Erase All" functionality for data management.
 *   **Intelligence Layer:** Gemini-powered Resume Analysis, Email Drafting, and Magic Paste.
+*   **LinkedIn Chrome Extension:** One-click job scraping directly from LinkedIn job postings with smart page detection.
+*   **Streak Tracking:** Gamified daily activity tracking to maintain job search momentum.
 
 ## 🎯 Immediate Roadmap (Next Steps)
 
@@ -29,7 +31,7 @@ The application has evolved into a robust "Job Search OS".
 *Treating the search like a job means having daily goals.*
 - [x] **Daily Dashboard:** A view showing today's targets (e.g., "3 Applications", "2 Follow-ups").
 - [x] **Daily Goal Tracker:** Progress bar for daily application targets.
-- [ ] **Streak Tracking:** Gamification to maintain momentum (Next up!).
+- [x] **Streak Tracking:** Gamification to maintain momentum with fire emojis and motivational messages.
 
 ### 4. 🎤 Interview Preparation Workspace (New!)
 *Preparation is half the work.*
@@ -38,7 +40,7 @@ The application has evolved into a robust "Job Search OS".
 
 ### 5. 🔌 Automated Job Ingestion
 *Minimize data entry, maximize analysis.*
-- [ ] **Chrome Extension:** A browser extension to "clip" job details directly from LinkedIn/Indeed/Greenhouse into JobOS.
+- [x] **Chrome Extension:** LinkedIn scraper extension with smart page detection (only shows on job postings).
 - [x] **Smart URL Paste:** (Implemented as Magic Paste) Paste a job link or text, and let the Copilot fill details.
 - [ ] **Email Parsing:** (Long-term) Forward application confirmations to a specific address to auto-create "Applied" records.
 
@@ -51,17 +53,16 @@ The application has evolved into a robust "Job Search OS".
 ## 📝 Context Log for Next Session
 *Read this before starting work.*
 
-**Last Completed:** Daily Dashboard Implementation (Phase 4).
-*   **Added:** `DashboardView` as default home.
-*   **Added:** `SettingsModal` data management (Export/Import/Reset/Erase).
-*   **Fixed:** Syntax errors in `JobBoard`, missing Application statuses.
-*   **Added:** `ViewMessageModal` for viewing application correspondence.
+**Last Completed:** Chrome Extension & Streak Tracking (Phase 5).
+*   **Added:** LinkedIn Chrome Extension with smart page detection (only shows on `/jobs/view/` pages).
+*   **Added:** Streak tracking utility (`src/utils/streak.ts`) with fire emoji gamification.
+*   **Updated:** Dashboard to display current streak with motivational messages.
+*   **Updated:** Vite config for port 8080 with API proxy to letsmcp on port 3002.
 
-**Next Priority:** **Streak Tracking** or **Interview Prep Workspace**.
-*   **Streak Tracking:** Extend the Dashboard to track consecutive days of activity.
-*   **Interview Prep:** Create a new "Preparation" view for storing STAR stories.
+**Next Priority:** **Interview Prep Workspace**.
+*   **STAR Story Bank:** Create a dedicated section to write and tag stories for behavioral questions.
+*   **Company Research Dossier:** Structured notes for company research (Mission, Values, Recent News).
 
 **Known Issues/Debts:**
-*   `JobBoard.tsx` has some minor lint warnings about unused imports.
-*   `ApplicationStatus` type definition was updated; ensure all consumers match.
-*   **Test Coverage:** No new tests were written for Dashboard or Settings logic. verify manually or add tests next.
+*   **Test Coverage:** Add tests for streak utility and Dashboard logic.
+*   **CI/CD:** Basic GitHub Actions workflow needed for automated checking.

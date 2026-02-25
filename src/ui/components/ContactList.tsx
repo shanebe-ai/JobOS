@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { type Person, type RelationshipType } from '../../domain/person';
 import { StorageService } from '../../services/storage';
+import { generateId } from '../../utils/uuid';
 
 interface ContactListProps {
     contacts: Person[];
@@ -72,11 +73,18 @@ export const ContactList: React.FC<ContactListProps> = ({ contacts, defaultCompa
         }
 
         if (formData.phone?.trim()) {
-            // Updated regex for 1 (XXX) XXX-XXXX format
-            const phoneRegex = /^1 \(\d{3}\) \d{3}-\d{4}$/;
-            if (!phoneRegex.test(formData.phone)) {
-                errors.phone = 'Invalid phone format'; // Input mask should handle most, but just in case
+            // Only validate if phone looks like it was intentionally entered (has digits)
+            const digitsOnly = formData.phone.replace(/[^\d]/g, '');
+            if (digitsOnly.length > 0 && digitsOnly.length < 10) {
+                errors.phone = 'Please enter a complete phone number';
                 isValid = false;
+            } else if (digitsOnly.length >= 10) {
+                // Full number entered - validate format
+                const phoneRegex = /^1 \(\d{3}\) \d{3}-\d{4}$/;
+                if (!phoneRegex.test(formData.phone)) {
+                    errors.phone = 'Invalid phone format';
+                    isValid = false;
+                }
             }
         }
 
@@ -90,7 +98,7 @@ export const ContactList: React.FC<ContactListProps> = ({ contacts, defaultCompa
         if (!validate()) return;
 
         const newPerson: Person = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             name: formData.name!,
             role: formData.role!,
             company: formData.company || defaultCompany || '',
