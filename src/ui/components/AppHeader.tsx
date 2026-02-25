@@ -15,7 +15,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, subtitle, onNavigat
     const [showProfileModal, setShowProfileModal] = useState(false);
 
     return (
-        <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ marginBottom: '2rem' }}>
             <UserProfileModal
                 isOpen={showProfileModal}
                 onClose={() => setShowProfileModal(false)}
@@ -26,10 +26,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, subtitle, onNavigat
                 onClose={() => setShowSettingsModal(false)}
             />
 
-            <div>
-                {typeof title === 'string' ? <h1 style={{ margin: '0 0 0.5rem 0', lineHeight: 1.2 }}>{title}</h1> : title}
+            <div style={{ marginBottom: '1rem' }}>
+                {typeof title === 'string' ? <h1 style={{ margin: '0 0 0.25rem 0', lineHeight: 1.2 }}>{title}</h1> : title}
                 {subtitle && <p style={{ color: 'var(--text-secondary)', margin: 0 }}>{subtitle}</p>}
-                {!subtitle && <div style={{ height: '1.5em' }}></div>} {/* Invisible spacer to match subtitle height */}
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -74,4 +73,5 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, subtitle, onNavigat
             </div>
         </div>
     );
+
 };

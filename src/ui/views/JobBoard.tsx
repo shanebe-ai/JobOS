@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StorageService } from '../../services/storage';
 import type { Job } from '../../domain/job';
 import type { Application } from '../../domain/application';
+import { AppHeader } from '../components/AppHeader';
 
 // Inline Icons
 const Icons = {
@@ -40,7 +41,7 @@ interface JobBoardProps {
     onNavigate: (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine' | 'extension-install') => void;
 }
 
-const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
+const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob, onNavigate }) => {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [applications, setApplications] = useState<Application[]>([]);
     const [loading, setLoading] = useState(true);
@@ -159,21 +160,20 @@ const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob }) => {
     }
 
     return (
-        <div style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div>
-                    <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: 'var(--text-primary)' }}>Job Board</h2>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem', fontSize: '0.875rem' }}>Manage your scouted opportunities</p>
-                </div>
-                <div>
-                    <span className="badge" style={{
-                        background: syncing ? '#dbeafe' : '#f1f5f9',
-                        color: syncing ? '#1e40af' : '#64748b'
-                    }}>
-                        {syncing ? 'Syncing...' : 'Auto-sync active'}
-                    </span>
-                </div>
-            </div>
+        <div>
+            <AppHeader
+                title="Job Board"
+                subtitle="Manage your scouted opportunities"
+                onNavigate={onNavigate}
+                currentView="board"
+            >
+                <span className="badge" style={{
+                    background: syncing ? '#dbeafe' : '#f1f5f9',
+                    color: syncing ? '#1e40af' : '#64748b'
+                }}>
+                    {syncing ? 'Syncing...' : 'Auto-sync active'}
+                </span>
+            </AppHeader>
 
             <div style={{
                 display: 'grid',

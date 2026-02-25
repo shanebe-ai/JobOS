@@ -116,7 +116,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, onSele
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             {/* Header */}
             <AppHeader
-                title={<h1 style={{ marginBottom: '0.5rem' }}>{greeting}{profile?.name ? `, ${profile.name}` : ''}.</h1>}
+                title={<h1 style={{ margin: '0 0 0.25rem 0', lineHeight: 1.2 }}>{greeting}{profile?.name ? `, ${profile.name}` : ''}.</h1>}
                 subtitle="Here is your daily briefing."
                 onNavigate={onNavigate}
                 currentView="dashboard"
