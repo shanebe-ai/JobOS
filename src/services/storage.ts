@@ -22,20 +22,24 @@ const STORAGE_KEYS = {
     STAR_STORIES: 'job_os_star_stories',
 };
 
+// Per-user namespace — set at login, kept for the session
+let _userId = 'anon';
+const pKey = (k: string) => `${k}__${_userId}`;
+
 // Streak data interface for persistence
 export interface PersistedStreakData {
     bestStreak: number;
     bestStreakDate: string;
 }
 
-// Generic helper to get/set
+// Generic helper to get/set — all keys are namespaced per user
 const get = <T>(key: string): T[] => {
-    const data = localStorage.getItem(key);
+    const data = localStorage.getItem(pKey(key));
     return data ? JSON.parse(data) : [];
 };
 
 const set = <T>(key: string, data: T[]) => {
-    localStorage.setItem(key, JSON.stringify(data));
+    localStorage.setItem(pKey(key), JSON.stringify(data));
 };
 
 export const StorageService = {
@@ -112,7 +116,7 @@ export const StorageService = {
         } else {
             artifacts.push(artifact);
         }
-        localStorage.setItem(STORAGE_KEYS.ARTIFACTS, JSON.stringify(artifacts));
+        localStorage.setItem(pKey(STORAGE_KEYS.ARTIFACTS), JSON.stringify(artifacts));
     },
     deleteArtifact: (id: string) => {
         const artifacts = get<Artifact>(STORAGE_KEYS.ARTIFACTS).filter(a => a.id !== id);
@@ -135,11 +139,15 @@ export const StorageService = {
 
     // Streak Data
     getStreakData: (): PersistedStreakData => {
-        const data = localStorage.getItem(STORAGE_KEYS.STREAK_DATA);
+        const data = localStorage.getItem(pKey(STORAGE_KEYS.STREAK_DATA));
         return data ? JSON.parse(data) : { bestStreak: 0, bestStreakDate: '' };
     },
     saveStreakData: (data: PersistedStreakData) => {
-        localStorage.setItem(STORAGE_KEYS.STREAK_DATA, JSON.stringify(data));
+        localStorage.setItem(pKey(STORAGE_KEYS.STREAK_DATA), JSON.stringify(data));
+    },
+
+    setUserId: (id: string) => {
+        _userId = id;
     },
 
     initialize: (force: boolean = false) => {
@@ -154,7 +162,7 @@ export const StorageService = {
             set(STORAGE_KEYS.APPLICATIONS, validApps);
         }
 
-        if (force || !localStorage.getItem(STORAGE_KEYS.JOBS)) {
+        if (force || !localStorage.getItem(pKey(STORAGE_KEYS.JOBS))) {
             const seedJobs: Job[] = [
                 {
                     id: 'job-1',
@@ -302,16 +310,16 @@ export const StorageService = {
 
     // User Profile
     getUserProfile: () => {
-        const data = localStorage.getItem(STORAGE_KEYS.USER_PROFILE);
+        const data = localStorage.getItem(pKey(STORAGE_KEYS.USER_PROFILE));
         return data ? JSON.parse(data) : null;
     },
     saveUserProfile: (profile: UserProfile) => {
-        localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
+        localStorage.setItem(pKey(STORAGE_KEYS.USER_PROFILE), JSON.stringify(profile));
     },
 
-    // Reset
+    // Reset — clears only current user's data, not global settings
     clearAll: () => {
-        // Set all lists to empty arrays so initialize() sees "data exists" (even if empty) and doesn't re-seed
+        // Set all lists to empty arrays so initialize() sees "data exists" and doesn't re-seed
         set(STORAGE_KEYS.JOBS, []);
         set(STORAGE_KEYS.APPLICATIONS, []);
         set(STORAGE_KEYS.PEOPLE, []);
@@ -321,71 +329,41 @@ export const StorageService = {
         set(STORAGE_KEYS.SUGGESTIONS, []);
         set(STORAGE_KEYS.COMPANY_RESEARCH, []);
         set(STORAGE_KEYS.STAR_STORIES, []);
-
-        // Clear singletons/settings
-        localStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
-        localStorage.removeItem(STORAGE_KEYS.STREAK_DATA);
-        localStorage.removeItem('job_os_settings');
+        localStorage.removeItem(pKey(STORAGE_KEYS.USER_PROFILE));
+        localStorage.removeItem(pKey(STORAGE_KEYS.STREAK_DATA));
     },
 
     // Data Management (Backup/Restore)
     exportAllData: (): string => {
         const backup: Record<string, any> = {
-            meta: {
-                version: 1,
-                date: new Date().toISOString(),
-                appName: 'JobOS'
-            },
+            meta: { version: 1, date: new Date().toISOString(), appName: 'JobOS' },
             data: {}
         };
-
         Object.values(STORAGE_KEYS).forEach(key => {
-            const raw = localStorage.getItem(key);
+            const raw = localStorage.getItem(pKey(key));
             if (raw) {
-                try {
-                    backup.data[key] = JSON.parse(raw);
-                } catch (e) {
-                    console.warn(`Failed to parse key ${key} for backup`, e);
-                }
+                try { backup.data[key] = JSON.parse(raw); } catch { /* skip */ }
             }
         });
-
-        // Also capture settings
         const settings = localStorage.getItem('job_os_settings');
-        if (settings) {
-            backup.data['job_os_settings'] = JSON.parse(settings);
-        }
-
+        if (settings) backup.data['job_os_settings'] = JSON.parse(settings);
         return JSON.stringify(backup, null, 2);
     },
 
     importData: (jsonContent: string): boolean => {
         try {
             const backup = JSON.parse(jsonContent);
-
-            // Basic validation
-            if (!backup || !backup.meta || !backup.data) {
-                console.error("Invalid backup format: Missing meta or data fields.");
-                return false;
-            }
-
-            if (backup.meta.appName !== 'JobOS') {
-                console.error("Invalid backup format: Not a JobOS backup.");
-                return false;
-            }
-
-            // Restore data
+            if (!backup?.meta?.appName || backup.meta.appName !== 'JobOS') return false;
             Object.entries(backup.data).forEach(([key, value]) => {
-                // Ensure we only restore known keys or valid settings
                 const validKeys = Object.values(STORAGE_KEYS);
-                if (validKeys.includes(key) || key === 'job_os_settings') {
+                if (validKeys.includes(key)) {
+                    localStorage.setItem(pKey(key), JSON.stringify(value));
+                } else if (key === 'job_os_settings') {
                     localStorage.setItem(key, JSON.stringify(value));
                 }
             });
-
             return true;
-        } catch (e) {
-            console.error("Import failed:", e);
+        } catch {
             return false;
         }
     },
