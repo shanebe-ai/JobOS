@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SettingsModal } from './SettingsModal';
 import { UserProfileModal } from './UserProfileModal';
+import { useAuth } from '../../context/AuthContext';
 
 interface AppHeaderProps {
     title: React.ReactNode;
@@ -13,6 +14,7 @@ interface AppHeaderProps {
 export const AppHeader: React.FC<AppHeaderProps> = ({ title, subtitle, onNavigate, currentView, children }) => {
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
+    const { user, signOut } = useAuth();
 
     return (
         <div style={{ marginBottom: '2rem' }}>
@@ -70,6 +72,28 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ title, subtitle, onNavigat
 
                 {/* Page Specific Actions */}
                 {children}
+
+                <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 0.25rem' }}></div>
+
+                {/* User avatar + sign out */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {user?.picture
+                        ? <img src={user.picture} alt={user.name} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
+                        : <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '600', color: '#475569' }}>
+                            {user?.name?.[0]?.toUpperCase() ?? '?'}
+                          </div>
+                    }
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {user?.name?.split(' ')[0]}
+                    </span>
+                    <button
+                        className="btn btn-outline"
+                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem' }}
+                        onClick={signOut}
+                    >
+                        Sign out
+                    </button>
+                </div>
             </div>
         </div>
     );

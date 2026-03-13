@@ -6,21 +6,30 @@ import { AddJobView } from './ui/views/AddJobView';
 import { JobDetail } from './ui/views/JobDetail';
 import { RoutineView } from './ui/views/RoutineView';
 import { ExtensionInstallView } from './ui/views/ExtensionInstallView';
-// ... existing imports
-
+import { LoginView } from './ui/views/LoginView';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { StorageService } from './services/storage';
 import './index.css';
 
-const App = () => {
-  const [activeView, setActiveView] = useState<'dashboard' | 'board' | 'add-job' | 'detail' | 'routine' | 'extension-install'>('dashboard');
+type AppView = 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine' | 'extension-install';
+
+const AppContent = () => {
+  const { user } = useAuth();
+  const [activeView, setActiveView] = useState<AppView>('dashboard');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
 
+  // Namespace storage to this user and initialize on login
   useEffect(() => {
-    StorageService.initialize();
-  }, []);
+    if (user) {
+      StorageService.setUserId(user.id);
+      StorageService.initialize();
+    }
+  }, [user?.id]);
 
-  const handleNavigate = (view: 'dashboard' | 'board' | 'add-job' | 'detail' | 'routine' | 'extension-install') => {
+  if (!user) return <LoginView />;
+
+  const handleNavigate = (view: AppView) => {
     setActiveView(view);
     if (view !== 'detail') setSelectedJobId(null);
   };
@@ -29,7 +38,7 @@ const App = () => {
     setSelectedJobId(id);
     setActiveView('detail');
   };
-  // ... existing code
+
   return (
     <DashboardLayout
       activeView={activeView}
@@ -55,6 +64,12 @@ const App = () => {
       {activeView === 'extension-install' && <ExtensionInstallView />}
     </DashboardLayout>
   );
-}
+};
+
+const App = () => (
+  <AuthProvider>
+    <AppContent />
+  </AuthProvider>
+);
 
 export default App;
