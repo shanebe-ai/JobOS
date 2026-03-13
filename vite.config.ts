@@ -9,6 +9,7 @@ export default defineConfig({
   server: {
     port: 8080,
     host: true,
+    allowedHosts: ['37.27.80.77.nip.io'],
     proxy: {
       '/api': {
         target: 'http://localhost:3002',
