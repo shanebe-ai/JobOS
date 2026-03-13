@@ -3,9 +3,9 @@ import React from 'react';
 export const ExtensionInstallView: React.FC = () => {
     return (
         <div style={{ padding: '2rem', maxWidth: '800px' }}>
-            <h1>Install JobOS LinkedIn Scraper</h1>
+            <h1>Install LinkedIn for JobOS</h1>
             <p style={{ fontSize: '1.1rem', color: '#666', marginBottom: '2rem' }}>
-                Follow these simple steps to install the LinkedIn scraper extension.
+                Follow these simple steps to install the LinkedIn extension.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -15,8 +15,8 @@ export const ExtensionInstallView: React.FC = () => {
                         <span style={{ background: '#0f172a', color: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>1</span>
                         Download & Extract
                     </h3>
-                    <p>Click the <strong>Download Extension</strong> button in the sidebar to get <code>jobos-linkedin-scraper.zip</code>.</p>
-                    <p style={{ marginTop: '0.5rem' }}>Extract the zip file. You should see a folder named <strong>JobOS LinkedIn Scraper</strong>.</p>
+                    <p>Click the <strong>Download Extension</strong> button in the sidebar to get <code>LinkedInJobOS.zip</code>.</p>
+                    <p style={{ marginTop: '0.5rem' }}>Extract the zip file. You should see a folder named <strong>LinkedInJobOS</strong>.</p>
                 </section>
 
                 <section style={{ backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
@@ -50,15 +50,15 @@ export const ExtensionInstallView: React.FC = () => {
                     <ol style={{ marginLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <li>Click the <strong>Load unpacked</strong> button (top left).</li>
                         <li>Navigate to your <strong>Downloads</strong> directory (or where you extracted the zip).</li>
-                        <li>Select the folder named <strong>JobOS LinkedIn Scraper</strong>.</li>
+                        <li>Select the folder named <strong>LinkedInJobOS</strong>.</li>
                     </ol>
                 </section>
 
                 <section style={{ backgroundColor: '#ecfdf5', padding: '1.5rem', borderRadius: '8px', border: '1px solid #10b981' }}>
                     <h3 style={{ marginBottom: '0.5rem', color: '#059669' }}>✅ Verification</h3>
                     <p>
-                        Go to any LinkedIn job page (e.g., specific job view). You should see a floating
-                        <strong> Save to JobOS</strong> button in the bottom right corner.
+                        Go to any LinkedIn job page — you'll see a dark <strong>+ Save to JobOS</strong> button in the bottom right.<br />
+                        On your own LinkedIn profile page, you'll see a blue <strong>👤 Save Profile to JobOS</strong> button instead.
                     </p>
                 </section>
             </div>
