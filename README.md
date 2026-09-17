@@ -6,6 +6,25 @@ Finding a new role isn't just a task—it's a full-time job. **JobOS** provides 
 
 We replace the chaos of spreadsheets and disparate notes with a unified "Operating System" designed to manage your pipeline, track your professional network, and leverage AI to maximize your productivity. Treat your search with the seriousness it deserves.
 
+> **Portfolio status:** Active project, currently intended for local installation. No public live demo is claimed.
+
+## Product tour
+
+Screenshots and a short demo are planned. Useful views to capture are the dashboard and job pipeline, job details and next actions, contact CRM, resume analysis or interview preparation, and the Chrome extension import flow.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  U[User] --> W[JobOS React + TypeScript]
+  X[Chrome extension] --> W
+  W --> A[Google OAuth]
+  W --> D[Local browser storage]
+  W --> M[LetsMCP REST service]
+  M --> P[Configured AI provider]
+  M --> B[Browser extraction when enabled]
+```
+
 ## 🚀 Features
 
 - **Google Sign-In**: Secure authentication — all data is segregated per Google account
