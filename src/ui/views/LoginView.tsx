@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
+import type { GoogleIdentityServices } from '../../types/google';
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
@@ -12,7 +13,8 @@ export const LoginView: React.FC = () => {
         if (initialized.current) return;
 
         const tryInit = () => {
-            const g = (window as any).google;
+            const g: GoogleIdentityServices | undefined =
+                (window as unknown as { google?: GoogleIdentityServices }).google;
             if (!g?.accounts?.id || !CLIENT_ID || !btnRef.current) return false;
 
             g.accounts.id.initialize({

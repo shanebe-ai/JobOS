@@ -59,8 +59,9 @@ export class LetsMCPProvider implements AIService {
 
     /**
      * Validate API key - for LetsMCP we just check server availability
+     * (no API key needed; the parameter is required by the AIService interface)
      */
-    async validateKey(_apiKey: string): Promise<string | null> {
+    async validateKey(): Promise<string | null> {
         const available = await this.isAvailable();
         if (available) {
             return 'letsmcp'; // Return a provider name to indicate success

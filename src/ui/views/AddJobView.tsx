@@ -46,7 +46,7 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
                         console.log('Normalized LinkedIn URL to:', contentToAnalyze);
                     }
                 }
-            } catch (e) {
+            } catch {
                 // Ignore URL parsing errors (could be just text)
             }
 
@@ -81,9 +81,9 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
                                 setIsExtracting(false);
                                 return;
                             }
-                        } catch (err: any) {
+                        } catch (err: unknown) {
                             // Capture LetsMCP specific errors (like Login Required)
-                            if (err.message && err.message.includes('LinkedIn')) {
+                            if (err instanceof Error && err.message.includes('LinkedIn')) {
                                 setExtractionError(err.message);
                             }
                             throw err; // Re-throw to trigger fallback
@@ -166,7 +166,7 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
             source: formData.source || '',
             description: formData.description || '',
             dateAdded: new Date().toISOString(),
-            ...formData as any
+            ...formData
         };
 
         StorageService.saveJob(newJob);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Suggestion, Frequency } from '../../domain/suggestion';
 
 interface SuggestionModalProps {
@@ -14,19 +14,17 @@ export const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClos
     const [frequency, setFrequency] = useState<Frequency>('Daily');
     const [frequencyDetails, setFrequencyDetails] = useState<{ daysOfWeek?: number[], dayOfMonth?: number }>({});
 
-    useEffect(() => {
-        if (initialData) {
-            setTitle(initialData.title);
-            setDescription(initialData.description || '');
-            setFrequency(initialData.frequency);
-            setFrequencyDetails(initialData.frequencyDetails || {});
-        } else {
-            setTitle('');
-            setDescription('');
-            setFrequency('Daily');
-            setFrequencyDetails({});
-        }
-    }, [initialData, isOpen]);
+    // Reset the form whenever a different suggestion is edited or the modal is (re)opened
+    const [prevInitialData, setPrevInitialData] = useState<Suggestion | null | undefined>(initialData);
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+    if (prevInitialData !== initialData || prevIsOpen !== isOpen) {
+        setPrevInitialData(initialData);
+        setPrevIsOpen(isOpen);
+        setTitle(initialData?.title || '');
+        setDescription(initialData?.description || '');
+        setFrequency(initialData?.frequency || 'Daily');
+        setFrequencyDetails(initialData?.frequencyDetails || {});
+    }
 
     if (!isOpen) return null;
 

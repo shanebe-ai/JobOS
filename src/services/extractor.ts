@@ -42,7 +42,7 @@ Requirements:
         let domain = '';
         try {
             domain = new URL(cleanUrl).hostname;
-        } catch (e) {
+        } catch {
             // invalid URL, just return empty
             return {};
         }

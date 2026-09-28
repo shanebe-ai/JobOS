@@ -50,7 +50,7 @@ export function calculateCurrentStreak(applications: Application[]): number {
     if (daysDiff > 1) return 0; // Streak broken
 
     let streak = 1;
-    let expectedDate = new Date(mostRecentDate);
+    const expectedDate = new Date(mostRecentDate);
 
     for (let i = 1; i < dates.length; i++) {
         expectedDate.setDate(expectedDate.getDate() - 1);

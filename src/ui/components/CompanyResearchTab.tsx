@@ -21,6 +21,20 @@ const EMPTY_RESEARCH: Omit<CompanyResearchData, 'id' | 'jobId' | 'lastUpdated'> 
     notes: '',
 };
 
+type CompanyResearchForm = Omit<CompanyResearchData, 'id' | 'jobId' | 'lastUpdated'>;
+
+const toFormData = (data: CompanyResearchData): CompanyResearchForm => ({
+    mission: data.mission,
+    size: data.size,
+    industry: data.industry,
+    techStack: data.techStack,
+    culture: data.culture,
+    recentNews: data.recentNews,
+    funding: data.funding,
+    whyJoin: data.whyJoin,
+    notes: data.notes,
+});
+
 export const CompanyResearchTab: React.FC<CompanyResearchTabProps> = ({ jobId, companyName, companyUrl }) => {
     const [data, setData] = useState<Omit<CompanyResearchData, 'id' | 'jobId' | 'lastUpdated'>>(EMPTY_RESEARCH);
     const [saved, setSaved] = useState(false);
@@ -33,8 +47,7 @@ export const CompanyResearchTab: React.FC<CompanyResearchTabProps> = ({ jobId, c
     useEffect(() => {
         const existing = StorageService.getCompanyResearch(jobId);
         if (existing) {
-            const { id: _id, jobId: _jid, lastUpdated: _lu, ...rest } = existing;
-            setData(rest);
+            setData(toFormData(existing));
         }
     }, [jobId]);
 
@@ -82,8 +95,8 @@ export const CompanyResearchTab: React.FC<CompanyResearchTabProps> = ({ jobId, c
                 funding: r.funding || prev.funding,
                 whyJoin: Array.isArray(r.whyJoin) ? r.whyJoin.join('\n') : (r.whyJoin || prev.whyJoin),
             }));
-        } catch (e: any) {
-            setAiError(e.message || 'AI research failed');
+        } catch (e: unknown) {
+            setAiError(e instanceof Error ? e.message : 'AI research failed');
         } finally {
             setLoading(false);
         }
