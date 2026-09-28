@@ -10,7 +10,19 @@ We replace the chaos of spreadsheets and disparate notes with a unified "Operati
 
 ## Product tour
 
-Screenshots and a short demo are planned. Useful views to capture are the dashboard and job pipeline, job details and next actions, contact CRM, resume analysis or interview preparation, and the Chrome extension import flow.
+Screenshots from a local run with demo data (September 2026).
+
+**Daily dashboard** — daily goal progress, active pipeline, response rate, application streak, follow-up reminders, and the daily routine.
+
+![JobOS daily dashboard](docs/screenshots/jobos-1-dashboard.png)
+
+**Job board** — kanban-style pipeline from Saved to Applied, with per-card status, company, location, and quick actions.
+
+![JobOS job board](docs/screenshots/jobos-2-board.png)
+
+**Job detail** — overview, company research, and interview prep tabs, plus AI suggested actions and the Resume Analyst (powered by [LetsMCP](https://github.com/shanebe-ai/letsmcp)).
+
+![JobOS job detail view](docs/screenshots/jobos-3-detail.png)
 
 ## Architecture
 
