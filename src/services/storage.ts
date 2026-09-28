@@ -307,11 +307,11 @@ export const StorageService = {
                 }
             ];
 
-            localStorage.setItem(STORAGE_KEYS.JOBS, JSON.stringify(seedJobs));
-            localStorage.setItem(STORAGE_KEYS.APPLICATIONS, JSON.stringify(seedApps));
-            localStorage.setItem(STORAGE_KEYS.PEOPLE, JSON.stringify(seedPeople));
-            localStorage.setItem(STORAGE_KEYS.ARTIFACTS, JSON.stringify(seedArtifacts));
-            localStorage.setItem(STORAGE_KEYS.SUGGESTIONS, JSON.stringify(seedSuggestions));
+            set(STORAGE_KEYS.JOBS, seedJobs);
+            set(STORAGE_KEYS.APPLICATIONS, seedApps);
+            set(STORAGE_KEYS.PEOPLE, seedPeople);
+            set(STORAGE_KEYS.ARTIFACTS, seedArtifacts);
+            set(STORAGE_KEYS.SUGGESTIONS, seedSuggestions);
         }
     },
 
