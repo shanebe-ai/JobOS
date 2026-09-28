@@ -1,19 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
-
-export interface AuthUser {
-    id: string;       // Google sub — used as storage namespace
-    name: string;
-    email: string;
-    picture?: string;
-}
-
-interface AuthContextType {
-    user: AuthUser | null;
-    signIn: (credential: string) => void;
-    signOut: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
+import React, { useState } from 'react';
+import { AuthContext, type AuthUser } from './auth';
+import type { GoogleIdentityServices } from '../types/google';
 
 const AUTH_KEY = 'job_os_auth';
 
@@ -25,6 +12,10 @@ function decodeGoogleJWT(token: string): AuthUser {
         email: payload.email,
         picture: payload.picture,
     };
+}
+
+function getGoogleIdentity(): GoogleIdentityServices | undefined {
+    return (window as unknown as { google?: GoogleIdentityServices }).google;
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -47,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem(AUTH_KEY);
         setUser(null);
         // Tell Google to disable auto-select so it doesn't immediately re-sign in
-        const g = (window as any).google;
+        const g = getGoogleIdentity();
         if (g?.accounts?.id) {
             g.accounts.id.disableAutoSelect();
         }
@@ -58,10 +49,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = () => {
-    const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-    return ctx;
 };

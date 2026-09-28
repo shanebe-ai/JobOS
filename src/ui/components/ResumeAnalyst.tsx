@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { StorageService } from '../../services/storage';
 import { GoogleGeminiProvider } from '../../services/ai/providers/gemini';
 import { LetsMCPProvider } from '../../services/ai/providers/letsmcp';
@@ -16,13 +16,17 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
     const [error, setError] = useState<string | null>(null);
     const [analysisSource, setAnalysisSource] = useState<string>('');
 
-    const resumes = artifacts.filter(a => a.type === 'Resume');
-
-    useEffect(() => {
-        if (resumes.length > 0) {
-            setSelectedArtifactId(resumes[0].id);
+    // Keep the selected resume in sync when the artifact list changes
+    const [prevArtifacts, setPrevArtifacts] = useState(artifacts);
+    if (prevArtifacts !== artifacts) {
+        setPrevArtifacts(artifacts);
+        const firstResume = artifacts.find(a => a.type === 'Resume');
+        if (firstResume) {
+            setSelectedArtifactId(firstResume.id);
         }
-    }, [artifacts]);
+    }
+
+    const resumes = artifacts.filter(a => a.type === 'Resume');
 
     // Local / Offline Analysis Logic
     const generateLocalAnalysis = (jd: string, resumeContent: string): string => {
@@ -137,9 +141,9 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
                     console.warn('LetsMCP unavailable or has no AI, trying Gemini...');
                     setError(`LetsMCP Check Failed: Available=${isAvailable}, HasAI=${hasAI}`);
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.warn('LetsMCP analysis failed, falling back to Gemini:', err);
-                setError(`LetsMCP Error: ${err.message}`);
+                setError(`LetsMCP Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
             }
         }
 
@@ -183,7 +187,7 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
                 setAnalysis(result);
                 setLoading(false);
                 return;
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.warn('Gemini analysis failed, falling back to local.', err);
             }
         }

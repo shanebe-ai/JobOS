@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StorageService } from '../../services/storage';
 import type { Job } from '../../domain/job';
 import { type Application, type ApplicationStatus } from '../../domain/application';
@@ -46,7 +46,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
     const [contactToDelete, setContactToDelete] = useState<string | null>(null);
     const [viewMessage, setViewMessage] = useState<{ title: string; recipient: string; date: string; content: string } | null>(null);
 
-    const refreshData = () => {
+    const refreshData = useCallback(() => {
         setLoading(true);
         setError(null);
         try {
@@ -85,17 +85,17 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
             } else {
                 setError(`Job not found for ID: ${jobId}`);
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error("Error loading job details:", e);
-            setError(`Failed to load job details: ${e.message}`);
+            setError(`Failed to load job details: ${e instanceof Error ? e.message : 'Unknown error'}`);
         } finally {
             setLoading(false);
         }
-    };
+    }, [jobId]);
 
     useEffect(() => {
         refreshData();
-    }, [jobId]);
+    }, [refreshData]);
 
     const handleStatusChange = (newStatus: ApplicationStatus) => {
         if (app && WorkflowService.canTransition(app.status, newStatus)) {
@@ -154,7 +154,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                 <CompanyResearchTab
                     jobId={jobId}
                     companyName={job.company}
-                    companyUrl={(job as any).url}
+                    companyUrl={job.url}
                 />
             )}
 
@@ -184,7 +184,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
 
                         <h3>Details</h3>
                         <p><strong>Location:</strong> {job.location}</p>
-                        {(job as any).workType && <p><strong>Work Type:</strong> {(job as any).workType}</p>}
+                        {(job as { workType?: string }).workType && <p><strong>Work Type:</strong> {(job as { workType?: string }).workType}</p>}
                         <p><strong>Source:</strong> {job.source}</p>
                         <div style={{ whiteSpace: 'pre-wrap', marginTop: '1rem' }} dangerouslySetInnerHTML={{ __html: job.description }} />
                     </div>
@@ -228,7 +228,6 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                             jobId={jobId}
                             artifacts={artifacts}
                             onUpdate={refreshData}
-                            jobDescription={job.description}
                             onSelect={(artifact) => {
                                 if (artifact.type !== 'OutreachMessage') return;
 
@@ -238,7 +237,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ jobId, onBack }) => {
                                 const contextLine = lines.find(l => l.startsWith('Context: ')) || '';
 
                                 const recipientName = toLine.replace('To: ', '').trim();
-                                const intent = (contextLine.replace('Context: ', '').trim() || 'Connect') as any;
+                                const intent = (contextLine.replace('Context: ', '').trim() || 'Connect') as OutreachDraftContext['intent'];
 
                                 // Extract Body (Everything after the double newline)
                                 const bodyIndex = artifact.content.indexOf('\n\n');

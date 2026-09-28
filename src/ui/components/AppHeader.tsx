@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SettingsModal } from './SettingsModal';
 import { UserProfileModal } from './UserProfileModal';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 interface AppHeaderProps {
     title: React.ReactNode;

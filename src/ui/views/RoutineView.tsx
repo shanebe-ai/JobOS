@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { StorageService } from '../../services/storage';
 import { generateId } from '../../utils/uuid';
 import type { Suggestion, SuggestionHistoryEntry } from '../../domain/suggestion';
@@ -15,7 +15,7 @@ interface RoutineViewProps {
 }
 
 export const RoutineView: React.FC<RoutineViewProps> = ({ onNavigate, isAddModalOpen, onSetAddModalOpen }) => {
-    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const [suggestions, setSuggestions] = useState<Suggestion[]>(() => StorageService.getSuggestions());
     // Removed local isAddModalOpen state
     const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
     // We need state for edit/delete modals if we want them to work perfectly
@@ -26,10 +26,6 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onNavigate, isAddModal
     const refreshSuggestions = () => {
         setSuggestions(StorageService.getSuggestions());
     };
-
-    useEffect(() => {
-        refreshSuggestions();
-    }, []);
 
     const handleSave = (suggestionData: Partial<Suggestion>) => {
         if (editingSuggestion) {
@@ -70,7 +66,7 @@ export const RoutineView: React.FC<RoutineViewProps> = ({ onNavigate, isAddModal
         };
 
         const updatedHistory = [historyEntry, ...suggestion.history];
-        let updatedSuggestion = { ...suggestion, history: updatedHistory };
+        const updatedSuggestion = { ...suggestion, history: updatedHistory };
 
         // Calculate next due date
         if (actionType === 'Completed' || actionType === 'Skipped') {

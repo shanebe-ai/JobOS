@@ -16,14 +16,15 @@ describe('SuggestionList', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         // Default mock return
-        (StorageService.getSuggestions as any).mockReturnValue([
+        vi.mocked(StorageService.getSuggestions).mockReturnValue([
             {
                 id: 's-1',
                 title: 'Existing Task',
                 frequency: 'Daily',
                 nextDueDate: new Date().toISOString(),
                 isActive: true,
-                history: []
+                history: [],
+                createdAt: new Date().toISOString()
             }
         ]);
     });

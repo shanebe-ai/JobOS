@@ -7,7 +7,8 @@ import { JobDetail } from './ui/views/JobDetail';
 import { RoutineView } from './ui/views/RoutineView';
 import { ExtensionInstallView } from './ui/views/ExtensionInstallView';
 import { LoginView } from './ui/views/LoginView';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 import { StorageService } from './services/storage';
 import './index.css';
 
@@ -25,7 +26,7 @@ const AppContent = () => {
       StorageService.setUserId(user.id);
       StorageService.initialize();
     }
-  }, [user?.id]);
+  }, [user]);
 
   if (!user) return <LoginView />;
 

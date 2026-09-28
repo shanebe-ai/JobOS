@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StorageService } from '../../services/storage';
 import { GoogleGeminiProvider } from '../../services/ai/providers/gemini';
 import { LetsMCPProvider } from '../../services/ai/providers/letsmcp';
@@ -11,42 +11,36 @@ interface DraftMessageModalProps {
     onSave: (message: string, status: 'Draft' | 'Sent') => void;
 }
 
+// Smart Templates System (Offline Fallback)
+const getFallbackTemplate = (ctx: OutreachDraftContext): string => {
+    const { recipientName, recipientRole, companyName, intent, jobTitle } = ctx;
+    const myName = StorageService.getUserProfile()?.name || '[My Name]';
+
+    switch (intent) {
+        case 'FollowUp':
+            return `Subject: Following up on my application for ${jobTitle}\n\nHi ${recipientName},\n\nI hope you're having a great week.\n\nI recently applied for the ${jobTitle} role at ${companyName} and wanted to briefly reiterate my strong interest. Given my background, I am confident I can contribute immediately to the team's goals.\n\nI know you're busy, but I'd love the chance to discuss how my experience aligns with what you're looking for.\n\nBest regards,\n${myName}`;
+
+        case 'PeerOutreach':
+            return `Subject: Quick question / Connecting\n\nHi ${recipientName},\n\nI noticed we both work in the tech space and I've been following ${companyName}'s work on [Specific Project/Topic]. I see you're working as a ${recipientRole} there.\n\nI'm currently exploring new opportunities and just wanted to connect with peers to learn more about the engineering culture at ${companyName}. No pressure at all, but would you be open to a quick 10-minute chat?\n\nCheers,\n${myName}`;
+
+        case 'ReferralRequest':
+            return `Subject: Quick question about ${companyName}\n\nHi ${recipientName},\n\nI hope this email finds you well.\n\nI'm a big fan of ${companyName} and noticed the open ${jobTitle} role. Based on my experience in [My Field/Skill], I think I'd be a great fit.\n\nI noticed you're a ${recipientRole} there. Would you be open to sharing a bit about your experience at the company? If you think it makes sense, I'd technically love a referral, but primarily I'd just value your perspective.\n\nBest,\n${myName}`;
+
+        case 'Connect':
+        default:
+            return `Subject: Connecting\n\nHi ${recipientName},\n\nI've been following ${companyName} for a while and am very impressed by the team's direction. I noticed you are a ${recipientRole} and wanted to reach out.\n\nI am currently looking for my next challenge in ${jobTitle} roles and would love to connect to keep in touch.\n\nBest,\n${myName}`;
+    }
+};
+
 export const DraftMessageModal: React.FC<DraftMessageModalProps> = ({ context: initialContext, initialDraft, onClose, onSave }) => {
     const [context, setContext] = useState<OutreachDraftContext>(initialContext);
     const [loading, setLoading] = useState(false);
     const [draft, setDraft] = useState(initialDraft || '');
     const [rationale, setRationale] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const didAutoGenerate = useRef(false);
 
-    // Auto-generate on mount only if there is no initial draft provided
-    useEffect(() => {
-        if (!initialDraft) {
-            generate();
-        }
-    }, []);
-
-    // Smart Templates System (Offline Fallback)
-    const getFallbackTemplate = (ctx: OutreachDraftContext): string => {
-        const { recipientName, recipientRole, companyName, intent, jobTitle } = ctx;
-        const myName = StorageService.getUserProfile()?.name || '[My Name]';
-
-        switch (intent) {
-            case 'FollowUp':
-                return `Subject: Following up on my application for ${jobTitle}\n\nHi ${recipientName},\n\nI hope you're having a great week.\n\nI recently applied for the ${jobTitle} role at ${companyName} and wanted to briefly reiterate my strong interest. Given my background, I am confident I can contribute immediately to the team's goals.\n\nI know you're busy, but I'd love the chance to discuss how my experience aligns with what you're looking for.\n\nBest regards,\n${myName}`;
-
-            case 'PeerOutreach':
-                return `Subject: Quick question / Connecting\n\nHi ${recipientName},\n\nI noticed we both work in the tech space and I've been following ${companyName}'s work on [Specific Project/Topic]. I see you're working as a ${recipientRole} there.\n\nI'm currently exploring new opportunities and just wanted to connect with peers to learn more about the engineering culture at ${companyName}. No pressure at all, but would you be open to a quick 10-minute chat?\n\nCheers,\n${myName}`;
-
-            case 'ReferralRequest':
-                return `Subject: Quick question about ${companyName}\n\nHi ${recipientName},\n\nI hope this email finds you well.\n\nI'm a big fan of ${companyName} and noticed the open ${jobTitle} role. Based on my experience in [My Field/Skill], I think I'd be a great fit.\n\nI noticed you're a ${recipientRole} there. Would you be open to sharing a bit about your experience at the company? If you think it makes sense, I'd technically love a referral, but primarily I'd just value your perspective.\n\nBest,\n${myName}`;
-
-            case 'Connect':
-            default:
-                return `Subject: Connecting\n\nHi ${recipientName},\n\nI've been following ${companyName} for a while and am very impressed by the team's direction. I noticed you are a ${recipientRole} and wanted to reach out.\n\nI am currently looking for my next challenge in ${jobTitle} roles and would love to connect to keep in touch.\n\nBest,\n${myName}`;
-        }
-    };
-
-    const generate = async () => {
+    const generate = useCallback(async () => {
         setLoading(true);
         setError(null);
         setRationale('');
@@ -131,7 +125,7 @@ export const DraftMessageModal: React.FC<DraftMessageModalProps> = ({ context: i
                     setRationale(`✨ AI Generated (Gemini ${settings.model}) based on intent '${context.intent}'.`);
                     setLoading(false);
                     return;
-                } catch (err: any) {
+                } catch (err: unknown) {
                     console.warn('Gemini draft failed:', err);
                 }
             }
@@ -141,19 +135,27 @@ export const DraftMessageModal: React.FC<DraftMessageModalProps> = ({ context: i
             setDraft(getFallbackTemplate(context));
             setRationale("⚠️ OFFLINE MODE: Using Smart Template (AI unavailable).");
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Generation Error:', err);
             setDraft(getFallbackTemplate(context));
 
             let errorMsg = "Unknown Error";
-            if (err.message) errorMsg = err.message;
+            if (err instanceof Error && err.message) errorMsg = err.message;
             if (errorMsg.includes('429')) errorMsg = "Quota Exceeded";
 
             setRationale(`⚠️ FALLBACK MODE: AI request failed (${errorMsg}). Used Smart Template instead.`);
         } finally {
             setLoading(false);
         }
-    };
+    }, [context]);
+
+    // Auto-generate on mount only if there is no initial draft provided
+    useEffect(() => {
+        if (!initialDraft && !didAutoGenerate.current) {
+            didAutoGenerate.current = true;
+            generate();
+        }
+    }, [generate, initialDraft]);
 
     return (
         <div style={{
@@ -174,7 +176,7 @@ export const DraftMessageModal: React.FC<DraftMessageModalProps> = ({ context: i
                             className="input"
                             style={{ width: '100%' }}
                             value={context.intent}
-                            onChange={(e) => setContext({ ...context, intent: e.target.value as any })}
+                            onChange={(e) => setContext({ ...context, intent: e.target.value as OutreachDraftContext['intent'] })}
                         >
                             <option value="FollowUp">Follow Up (Application)</option>
                             <option value="PeerOutreach">Peer Outreach (Culture/Team)</option>
@@ -188,7 +190,7 @@ export const DraftMessageModal: React.FC<DraftMessageModalProps> = ({ context: i
                             className="input"
                             style={{ width: '100%' }}
                             value={context.tone}
-                            onChange={(e) => setContext({ ...context, tone: e.target.value as any })}
+                            onChange={(e) => setContext({ ...context, tone: e.target.value as OutreachDraftContext['tone'] })}
                         >
                             <option value="Professional">Professional</option>
                             <option value="Casual">Casual / Friendly</option>

@@ -29,10 +29,10 @@ export const EngagementLog: React.FC<EngagementLogProps> = ({ jobId, engagements
             applicationId: jobId, // Link to job if provided
             personId: formData.personId || undefined,
             type: formData.type as EngagementType,
-            platform: formData.platform as any,
+            platform: formData.platform as Engagement['platform'],
             description: formData.description,
             date: new Date().toISOString(),
-            ...formData as any
+            ...formData
         };
 
         StorageService.saveEngagement(newEngagement);
@@ -80,7 +80,7 @@ export const EngagementLog: React.FC<EngagementLogProps> = ({ jobId, engagements
                         <select
                             className="input"
                             value={formData.platform}
-                            onChange={e => setFormData({ ...formData, platform: e.target.value as any })}
+                            onChange={e => setFormData({ ...formData, platform: e.target.value as Engagement['platform'] })}
                         >
                             <option value="LinkedIn">LinkedIn</option>
                             <option value="Twitter">Twitter</option>

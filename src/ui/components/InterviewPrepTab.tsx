@@ -9,6 +9,16 @@ interface InterviewPrepTabProps {
     jobDescription?: string;
 }
 
+type StarStoryForm = Omit<StarStory, 'id' | 'jobId' | 'createdDate' | 'lastModifiedDate'>;
+
+const toStoryForm = (story: StarStory): StarStoryForm => ({
+    skill: story.skill,
+    situation: story.situation,
+    task: story.task,
+    action: story.action,
+    result: story.result,
+});
+
 const EMPTY_STORY: Omit<StarStory, 'id' | 'jobId' | 'createdDate' | 'lastModifiedDate'> = {
     skill: '',
     situation: '',
@@ -27,7 +37,7 @@ export const InterviewPrepTab: React.FC<InterviewPrepTabProps> = ({ jobId, jobTi
     };
 
     useEffect(() => {
-        loadStories();
+        setStories(StorageService.getStarStories(jobId));
     }, [jobId]);
 
     const startNew = () => {
@@ -36,8 +46,7 @@ export const InterviewPrepTab: React.FC<InterviewPrepTabProps> = ({ jobId, jobTi
     };
 
     const startEdit = (story: StarStory) => {
-        const { id: _id, jobId: _jid, createdDate: _cd, lastModifiedDate: _lm, ...rest } = story;
-        setForm(rest);
+        setForm(toStoryForm(story));
         setEditing(story.id);
     };
 

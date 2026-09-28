@@ -7,6 +7,13 @@ import type { Engagement } from '../domain/engagement';
 import type { Artifact } from '../domain/artifact';
 import type { CompanyResearchData } from '../domain/research';
 import type { StarStory } from '../domain/star';
+import type { Suggestion } from '../domain/suggestion';
+
+// Backup file structure for export/import
+interface JobOSBackup {
+    meta: { version: number; date: string; appName: string };
+    data: Record<string, unknown>;
+}
 
 const STORAGE_KEYS = {
     JOBS: 'job_os_jobs',
@@ -124,16 +131,16 @@ export const StorageService = {
     },
 
     // Suggestions
-    getSuggestions: () => get<any>(STORAGE_KEYS.SUGGESTIONS), // Using 'any' to avoid import cycle if unrelated, but better to import type
-    saveSuggestion: (suggestion: any) => {
-        const suggestions = get<any>(STORAGE_KEYS.SUGGESTIONS);
+    getSuggestions: () => get<Suggestion>(STORAGE_KEYS.SUGGESTIONS),
+    saveSuggestion: (suggestion: Suggestion) => {
+        const suggestions = get<Suggestion>(STORAGE_KEYS.SUGGESTIONS);
         const index = suggestions.findIndex(s => s.id === suggestion.id);
         if (index >= 0) suggestions[index] = suggestion;
         else suggestions.push(suggestion);
         set(STORAGE_KEYS.SUGGESTIONS, suggestions);
     },
     deleteSuggestion: (id: string) => {
-        const suggestions = get<any>(STORAGE_KEYS.SUGGESTIONS).filter(s => s.id !== id);
+        const suggestions = get<Suggestion>(STORAGE_KEYS.SUGGESTIONS).filter(s => s.id !== id);
         set(STORAGE_KEYS.SUGGESTIONS, suggestions);
     },
 
@@ -335,7 +342,7 @@ export const StorageService = {
 
     // Data Management (Backup/Restore)
     exportAllData: (): string => {
-        const backup: Record<string, any> = {
+        const backup: JobOSBackup = {
             meta: { version: 1, date: new Date().toISOString(), appName: 'JobOS' },
             data: {}
         };

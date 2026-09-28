@@ -107,7 +107,7 @@ export const ContactList: React.FC<ContactListProps> = ({ contacts, defaultCompa
             phone: formData.phone,
             notes: formData.notes,
             dateAdded: new Date().toISOString(),
-            ...formData as any
+            ...formData
         };
 
         StorageService.savePerson(newPerson);
@@ -176,7 +176,7 @@ export const ContactList: React.FC<ContactListProps> = ({ contacts, defaultCompa
                         {/* Relationship */}
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <label style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Relationship</label>
-                            <select className="input" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as any })}>
+                            <select className="input" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as RelationshipType })}>
                                 <option value="Recruiter">Recruiter</option>
                                 <option value="HiringManager">Hiring Manager</option>
                                 <option value="Referral">Referral</option>

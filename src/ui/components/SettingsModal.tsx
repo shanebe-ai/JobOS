@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { StorageService } from '../../services/storage';
 import { GoogleGeminiProvider } from '../../services/ai/providers/gemini';
 
@@ -24,14 +24,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     const [resetWarningOpen, setResetWarningOpen] = useState(false);
     const [eraseWarningOpen, setEraseWarningOpen] = useState(false);
 
-    useEffect(() => {
+    // Reset form state whenever the modal is opened
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+    if (prevIsOpen !== isOpen) {
+        setPrevIsOpen(isOpen);
         if (isOpen) {
             const settings = StorageService.getSettings();
             setApiKey(settings.apiKey || '');
             setStatus('idle');
             setStatusMessage('');
         }
-    }, [isOpen]);
+    }
 
     const handleSave = async () => {
         setStatus('validating');
@@ -57,10 +60,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 setStatus('error');
                 setStatusMessage('Invalid API Key or no supported models found.');
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             setStatus('error');
             // Show the actual error message to the user for debugging
-            setStatusMessage(`Error: ${error.message || 'Unknown error'}`);
+            setStatusMessage(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 

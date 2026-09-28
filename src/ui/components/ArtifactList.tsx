@@ -10,10 +10,9 @@ interface ArtifactListProps {
     artifacts: Artifact[];
     onUpdate: () => void;
     onSelect: (artifact: Artifact) => void;
-    jobDescription?: string;
 }
 
-export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, onUpdate, onSelect, jobDescription: _jobDescription }) => {
+export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, onUpdate, onSelect }) => {
     const [isAdding, setIsAdding] = useState(false);
     const [artifactToDelete, setArtifactToDelete] = useState<string | null>(null);
     const [isExtracting, setIsExtracting] = useState(false);
@@ -45,7 +44,7 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
             version: 1,
             createdDate: new Date().toISOString(),
             lastModifiedDate: new Date().toISOString(),
-            ...formData as any
+            ...formData
         };
 
         StorageService.saveArtifact(newArtifact);
@@ -73,7 +72,7 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
                         <input className="input" placeholder="File Name (e.g. Targeted Resume)" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
                     </div>
                     <div style={{ marginBottom: '0.5rem' }}>
-                        <select className="input" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as any })}>
+                        <select className="input" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as ArtifactType })}>
                             <option value="Resume">Resume</option>
                             <option value="CoverLetter">Cover Letter</option>
                             <option value="Portfolio">Portfolio</option>
@@ -101,11 +100,12 @@ export const ArtifactList: React.FC<ArtifactListProps> = ({ jobId, artifacts, on
                                         try {
                                             const text = await FileExtractionService.extractText(file);
                                             setFormData(prev => ({ ...prev, content: text }));
-                                        } catch (err: any) {
-                                            alert(`Failed to read file: ${err.message}`);
+                                        } catch (err: unknown) {
+                                            const message = err instanceof Error ? err.message : 'Unknown error';
+                                            alert(`Failed to read file: ${message}`);
                                             setFormData(prev => ({
                                                 ...prev,
-                                                content: `[Attached File: ${file.name}]\n\n(Error reading content: ${err.message})`
+                                                content: `[Attached File: ${file.name}]\n\n(Error reading content: ${message})`
                                             }));
                                         } finally {
                                             setIsExtracting(false);

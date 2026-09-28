@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StorageService } from '../../services/storage';
 import type { Job } from '../../domain/job';
 import type { Application } from '../../domain/application';
@@ -46,6 +46,8 @@ const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob, onNavigate }) => {
     const [applications, setApplications] = useState<Application[]>([]);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
+    // Mirror of `syncing` for the memoized sync callback, so its identity stays stable
+    const syncingRef = useRef(false);
 
     const loadJobs = useCallback(() => {
         try {
@@ -95,8 +97,9 @@ const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob, onNavigate }) => {
         loadJobs();
     };
 
-    const handleSync = async () => {
-        if (syncing) return;
+    const handleSync = useCallback(async () => {
+        if (syncingRef.current) return;
+        syncingRef.current = true;
         setSyncing(true);
         try {
             const res = await fetch(API_URL);
@@ -131,21 +134,22 @@ const JobBoard: React.FC<JobBoardProps> = ({ onSelectJob, onNavigate }) => {
         } catch (error) {
             console.error('Sync failed:', error);
         } finally {
+            syncingRef.current = false;
             setSyncing(false);
         }
-    };
+    }, [loadJobs]);
 
     useEffect(() => {
         loadJobs();
         handleSync();
-    }, [loadJobs]);
+    }, [loadJobs, handleSync]);
 
     useEffect(() => {
         const interval = setInterval(() => {
             handleSync();
         }, 3000);
         return () => clearInterval(interval);
-    }, []);
+    }, [handleSync]);
 
     useEffect(() => {
         const handleStorageChange = () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { StorageService } from '../../services/storage';
 import { generateId } from '../../utils/uuid';
 import type { Suggestion, SuggestionHistoryEntry } from '../../domain/suggestion';
@@ -6,30 +6,28 @@ import { SuggestionCard } from './SuggestionCard';
 import { SuggestionModal } from './SuggestionModal';
 import { ConfirmationModal } from './ConfirmationModal';
 
+const getDueSuggestions = (): Suggestion[] => {
+    const all = StorageService.getSuggestions();
+    // Determine "Active" as: Marked Active AND (Due Date is today/past OR it's a new task)
+    // Actually, simplest is: Is Active AND Next Due Date <= End of Today.
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    return all.filter(s => {
+        if (!s.isActive) return false;
+        const due = new Date(s.nextDueDate);
+        return due <= endOfToday;
+    });
+};
+
 export const SuggestionList: React.FC = () => {
-    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const [suggestions, setSuggestions] = useState<Suggestion[]>(getDueSuggestions);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingSuggestion, setEditingSuggestion] = useState<Suggestion | null>(null);
 
     const refreshSuggestions = () => {
-        const all = StorageService.getSuggestions();
-        // Determine "Active" as: Marked Active AND (Due Date is today/past OR it's a new task)
-        // Actually, simplest is: Is Active AND Next Due Date <= End of Today.
-        const endOfToday = new Date();
-        endOfToday.setHours(23, 59, 59, 999);
-
-        const due = all.filter(s => {
-            if (!s.isActive) return false;
-            const due = new Date(s.nextDueDate);
-            return due <= endOfToday;
-        });
-
-        setSuggestions(due);
+        setSuggestions(getDueSuggestions());
     };
-
-    useEffect(() => {
-        refreshSuggestions();
-    }, []);
 
 
     const handleSave = (suggestionData: Partial<Suggestion>) => {
@@ -66,7 +64,7 @@ export const SuggestionList: React.FC = () => {
         };
 
         const updatedHistory = [historyEntry, ...suggestion.history];
-        let updatedSuggestion = { ...suggestion, history: updatedHistory };
+        const updatedSuggestion = { ...suggestion, history: updatedHistory };
 
         // Calculate next due date
         if (actionType === 'Completed' || actionType === 'Skipped') {

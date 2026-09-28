@@ -1,9 +1,15 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { AIService } from '../ai';
+import type { GenerativeModel } from '@google/generative-ai';
+import type { AIService, JobDetailsExtraction } from '../ai';
+
+interface GeminiModelInfo {
+    name: string;
+    supportedGenerationMethods?: string[];
+}
 
 export class GoogleGeminiProvider implements AIService {
     private genAI: GoogleGenerativeAI | null = null;
-    private model: any = null;
+    private model: GenerativeModel | null = null;
     private modelName: string = 'gemini-1.5-flash';
 
     constructor(apiKey?: string, modelName?: string) {
@@ -32,8 +38,8 @@ export class GoogleGeminiProvider implements AIService {
                 const result = await this.model.generateContent(prompt);
                 const response = await result.response;
                 return response.text();
-            } catch (error: any) {
-                const msg = error.message || '';
+            } catch (error: unknown) {
+                const msg = error instanceof Error ? error.message : '';
                 const isQuota = msg.includes('429') || msg.toLowerCase().includes('quota');
 
                 if (isQuota && attempt < maxRetries - 1) {
@@ -71,18 +77,19 @@ export class GoogleGeminiProvider implements AIService {
 
             console.log('Available models:', data.models);
 
-            if (!data.models || !Array.isArray(data.models)) {
+            const models = data.models as GeminiModelInfo[] | undefined;
+            if (!models || !Array.isArray(models)) {
                 throw new Error('Invalid response format from ListModels');
             }
 
             // Filter for models that support generateContent
-            const supportedModels = data.models.filter((m: any) =>
+            const supportedModels = models.filter((m: GeminiModelInfo) =>
                 m.supportedGenerationMethods &&
                 m.supportedGenerationMethods.includes('generateContent')
             );
 
             // Sort preferences: prefer models with 'pro' or 'flash' in the name
-            const preferredModels = supportedModels.sort((a: any, b: any) => {
+            const preferredModels = supportedModels.sort((a: GeminiModelInfo, b: GeminiModelInfo) => {
                 const nameA = a.name.toLowerCase();
                 const nameB = b.name.toLowerCase();
                 const scoreA = (nameA.includes('flash') ? 2 : 0) + (nameA.includes('pro') ? 1 : 0) + (nameA.includes('1.5') ? 1 : 0);
@@ -108,12 +115,12 @@ export class GoogleGeminiProvider implements AIService {
 
             throw new Error('No models found that support generateContent.');
 
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error('Model Discovery Error:', e);
             throw e;
         }
     }
-    async extractJobDetails(text: string): Promise<any> {
+    async extractJobDetails(text: string): Promise<JobDetailsExtraction> {
         if (!this.model) {
             throw new Error('Gemini Provider not initialized with API Key');
         }

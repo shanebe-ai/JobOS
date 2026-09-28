@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StorageService } from '../../services/storage';
 import type { Job } from '../../domain/job';
 import type { Application } from '../../domain/application';
@@ -15,31 +15,17 @@ interface DashboardViewProps {
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, onSelectJob }) => {
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [applications, setApplications] = useState<Application[]>([]);
-    const [jobs, setJobs] = useState<Job[]>([]);
-    const [engagements, setEngagements] = useState<Engagement[]>([]);
-    const [greeting, setGreeting] = useState('');
-    const [bestStreak, setBestStreak] = useState<number>(0);
-
-    useEffect(() => {
-        // Load Data
-        const userProfile = StorageService.getUserProfile();
-        setProfile(userProfile);
-        setApplications(StorageService.getApplications());
-        setJobs(StorageService.getJobs());
-        setEngagements(StorageService.getEngagements());
-
-        // Load streak data
-        const streakData = StorageService.getStreakData();
-        setBestStreak(streakData.bestStreak);
-
-        // Set Greeting
+    const [profile] = useState<UserProfile | null>(() => StorageService.getUserProfile());
+    const [applications] = useState<Application[]>(() => StorageService.getApplications());
+    const [jobs] = useState<Job[]>(() => StorageService.getJobs());
+    const [engagements] = useState<Engagement[]>(() => StorageService.getEngagements());
+    const [greeting] = useState(() => {
         const hour = new Date().getHours();
-        if (hour < 12) setGreeting('Good morning');
-        else if (hour < 18) setGreeting('Good afternoon');
-        else setGreeting('Good evening');
-    }, []);
+        if (hour < 12) return 'Good morning';
+        if (hour < 18) return 'Good afternoon';
+        return 'Good evening';
+    });
+    const [bestStreak, setBestStreak] = useState<number>(() => StorageService.getStreakData().bestStreak);
 
     // --- Metrics Logic ---
 
@@ -83,15 +69,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, onSele
     const streakEmoji = getStreakEmoji(currentStreak);
 
     // Update best streak if current exceeds it
-    useEffect(() => {
-        if (currentStreak > bestStreak) {
-            setBestStreak(currentStreak);
-            StorageService.saveStreakData({
-                bestStreak: currentStreak,
-                bestStreakDate: new Date().toISOString()
-            });
-        }
-    }, [currentStreak, bestStreak]);
+    if (currentStreak > bestStreak) {
+        setBestStreak(currentStreak);
+        StorageService.saveStreakData({
+            bestStreak: currentStreak,
+            bestStreakDate: new Date().toISOString()
+        });
+    }
 
     // 4. Stalled Applications
     const stalledApps = applications.filter(app => isStalled(app));
