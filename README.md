@@ -2,7 +2,7 @@
 
 **Your Personal AI-Powered Workspace for the "Job" of Finding a Job.**
 
-Finding a new role isn't just a task—it's a full-time job. **JobOS** provides the professional-grade tools you need to manage it like one.
+Finding a new role isn't just a task, it's a full-time job. **JobOS** provides the professional-grade tools you need to manage it like one.
 
 We replace the chaos of spreadsheets and disparate notes with a unified "Operating System" designed to manage your pipeline, track your professional network, and leverage AI to maximize your productivity. Treat your search with the seriousness it deserves.
 
@@ -12,15 +12,15 @@ We replace the chaos of spreadsheets and disparate notes with a unified "Operati
 
 Screenshots from a local run with demo data (September 2026).
 
-**Daily dashboard** — daily goal progress, active pipeline, response rate, application streak, follow-up reminders, and the daily routine.
+**Daily dashboard**: daily goal progress, active pipeline, response rate, application streak, follow-up reminders, and the daily routine.
 
 ![JobOS daily dashboard](docs/screenshots/jobos-1-dashboard.png)
 
-**Job board** — kanban-style pipeline from Saved to Applied, with per-card status, company, location, and quick actions.
+**Job board**: kanban-style pipeline from Saved to Applied, with per-card status, company, location, and quick actions.
 
 ![JobOS job board](docs/screenshots/jobos-2-board.png)
 
-**Job detail** — overview, company research, and interview prep tabs, plus AI suggested actions and the Resume Analyst (powered by [LetsMCP](https://github.com/shanebe-ai/letsmcp)).
+**Job detail**: overview, company research, and interview prep tabs, plus AI suggested actions and the Resume Analyst (powered by [LetsMCP](https://github.com/shanebe-ai/letsmcp)).
 
 ![JobOS job detail view](docs/screenshots/jobos-3-detail.png)
 
@@ -39,7 +39,7 @@ flowchart LR
 
 ## 🚀 Features
 
-- **Google Sign-In**: Secure authentication — all data is segregated per Google account
+- **Google Sign-In**: Secure authentication. All data is segregated per Google account
 - **LinkedIn for JobOS Chrome Extension**: One-click job scraping + profile sync directly from LinkedIn
   - Extracts title, company, location, and work type (Remote/Hybrid/On-site)
   - Preserves HTML formatting in job descriptions
@@ -47,7 +47,7 @@ flowchart LR
   - Auto-syncs to JobOS dashboard
 - **Kanban-Style Job Board**: Visualize your job search pipeline from "Saved" to "Offer"
 - **Daily Dashboard**: A centralized command center to track active applications and pipeline metrics
-- **Application Management**: Keep track of every detail—job descriptions, contacts, and interview notes—in one place
+- **Application Management**: Keep track of every detail (job descriptions, contacts, and interview notes) in one place
 - **Contact Tracking**: Manage relationships with recruiters, hiring managers, and referrals
 - **Engagement Log**: Track all outreach, follow-ups, and interview activities
 - **My Routine**: Daily habit tracker with streak gamification to maintain momentum
@@ -62,7 +62,7 @@ flowchart LR
 
 - **Frontend**: React 19, TypeScript
 - **Build Tool**: Vite
-- **Auth**: Google Identity Services (GSI) — client-side JWT, no backend required
+- **Auth**: Google Identity Services (GSI). Client-side JWT, no backend required
 - **Styling**: Modern CSS3 (Variables, Flexbox/Grid)
 - **State Management**: React Hooks & Context
 - **Testing**: Vitest, React Testing Library
@@ -88,7 +88,7 @@ flowchart LR
    npm install
    ```
 
-3. Configure environment variables — copy `.env.example` to `.env` and fill in your values:
+3. Configure environment variables: copy `.env.example` to `.env` and fill in your values:
    ```bash
    cp .env.example .env
    ```
@@ -112,13 +112,13 @@ JobOS uses Google Sign-In for authentication. To configure it:
 2. Create an **OAuth 2.0 Client ID** → Web application
 3. Add your domain to **Authorized JavaScript origins**:
    - Local dev: `http://localhost:8080`
-   - Remote server: use a domain (Google does not accept raw IPs — see nip.io tip below)
+   - Remote server: use a domain (Google does not accept raw IPs, see nip.io tip below)
 4. Copy the Client ID into your `.env`:
    ```
    VITE_GOOGLE_CLIENT_ID=your_client_id_here
    ```
 
-> **Tip — Hosting on a raw IP?** Google OAuth requires a domain name. Use [nip.io](https://nip.io) — if your server IP is `1.2.3.4`, your domain becomes `1.2.3.4.nip.io` (resolves automatically). Add `http://1.2.3.4.nip.io:8080` as your authorized origin and set `allowedHosts: ['1.2.3.4.nip.io']` in `vite.config.ts`.
+> **Tip: Hosting on a raw IP?** Google OAuth requires a domain name. Use [nip.io](https://nip.io). If your server IP is `1.2.3.4`, your domain becomes `1.2.3.4.nip.io` (resolves automatically). Add `http://1.2.3.4.nip.io:8080` as your authorized origin and set `allowedHosts: ['1.2.3.4.nip.io']` in `vite.config.ts`.
 
 ### Chrome Extension Setup
 
@@ -154,4 +154,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
