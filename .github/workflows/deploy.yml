@@ -1,0 +1,26 @@
+name: Deploy to production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to tmcdonald.ca
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            set -e
+            cd /home/JobOS
+            git fetch origin main
+            git reset --hard origin/main
+            npm ci
+            npm run build
+            pm2 startOrRestart ecosystem.config.js
+            sleep 5
+            curl -sf http://localhost:3003/
