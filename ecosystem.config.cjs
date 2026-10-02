@@ -1,5 +1,5 @@
 // Production process list for tmcdonald.ca. Managed with:
-//   pm2 startOrRestart ecosystem.config.js
+//   pm2 startOrRestart ecosystem.config.cjs
 module.exports = {
   apps: [
     {

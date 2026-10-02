@@ -21,6 +21,6 @@ jobs:
             git reset --hard origin/main
             npm ci
             npm run build
-            pm2 startOrRestart ecosystem.config.js
+            pm2 startOrRestart ecosystem.config.cjs
             sleep 5
             curl -sf http://localhost:3003/
