@@ -128,7 +128,6 @@ export const ResumeAnalyst: React.FC<ResumeAnalystProps> = ({ jobDescription, ar
                 const hasAI = await mcpProvider.hasAIProvider();
 
                 if (isAvailable && hasAI) {
-                    console.log('Attempting LetsMCP resume analysis...');
                     const result = await mcpProvider.analyzeResume(jobDescription, resume.content);
 
                     if (result && typeof result.matchScore === 'number') {

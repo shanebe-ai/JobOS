@@ -165,7 +165,6 @@ export const StorageService = {
 
         const validApps = apps.filter(a => jobIds.has(a.jobId));
         if (validApps.length !== apps.length) {
-            console.log(`JobOS: Cleaning up ${apps.length - validApps.length} orphaned applications.`);
             set(STORAGE_KEYS.APPLICATIONS, validApps);
         }
 

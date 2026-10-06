@@ -62,7 +62,6 @@ export class GoogleGeminiProvider implements AIService {
      */
     async validateKey(key: string): Promise<string | null> {
         try {
-            console.log('Fetching available models from API...');
             // Direct fetch to list models (bypassing SDK guessing)
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
             const data = await response.json();
@@ -75,7 +74,6 @@ export class GoogleGeminiProvider implements AIService {
                 throw new Error(`Failed to list models: ${response.status} ${response.statusText}`);
             }
 
-            console.log('Available models:', data.models);
 
             const models = data.models as GeminiModelInfo[] | undefined;
             if (!models || !Array.isArray(models)) {
@@ -103,7 +101,6 @@ export class GoogleGeminiProvider implements AIService {
                 const bestModelFullName = preferredModels[0].name;
                 const bestModelName = bestModelFullName.replace('models/', '');
 
-                console.log(`Auto-selected best model: ${bestModelName}`);
 
                 // Verify it actually works
                 const tempAI = new GoogleGenerativeAI(key);

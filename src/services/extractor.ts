@@ -7,10 +7,7 @@ export const ExtractorService = {
 
         // DEMO MODE: Specific URL triggers "Magic Fill"
         // This simulates what a backend/extension would do
-        // DEMO MODE: Specific URL triggers "Magic Fill"
-        // This simulates what a backend/extension would do
         if (cleanUrl === 'demo-job' || cleanUrl === 'example.com/perfect-job') {
-            console.log('⚡ Demo Mode Triggered');
 
             // Artificial delay to feel like "work" is happening
             await new Promise(resolve => setTimeout(resolve, 800));
