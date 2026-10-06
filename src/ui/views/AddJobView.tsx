@@ -43,7 +43,6 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
                     const currentJobId = urlObj.searchParams.get('currentJobId');
                     if (currentJobId) {
                         contentToAnalyze = `https://www.linkedin.com/jobs/view/${currentJobId}`;
-                        console.log('Normalized LinkedIn URL to:', contentToAnalyze);
                     }
                 }
             } catch {
@@ -63,7 +62,6 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
                     // Check if MCP server is available
                     const isAvailable = await mcpProvider.isAvailable();
                     if (isAvailable) {
-                        console.log('Attempting LetsMCP extraction...');
                         try {
                             const aiDetails = await mcpProvider.extractJobDetails(contentToAnalyze);
 
@@ -99,7 +97,6 @@ export const AddJobView: React.FC<AddJobViewProps> = ({ onJobAdded, onCancel }) 
             if (settings.apiKey) {
                 try {
                     const provider = new GoogleGeminiProvider(settings.apiKey, settings.model);
-                    console.log('Attempting Gemini extraction...');
                     const aiDetails = await provider.extractJobDetails(contentToAnalyze);
 
                     if (aiDetails.title || aiDetails.company) {

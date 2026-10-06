@@ -62,7 +62,6 @@ export const DraftMessageModal: React.FC<DraftMessageModalProps> = ({ context: i
                     const hasAI = await mcpProvider.hasAIProvider();
 
                     if (isAvailable && hasAI) {
-                        console.log('Attempting LetsMCP email draft...');
                         const result = await mcpProvider.draftEmail({
                             recipientName: context.recipientName,
                             recipientRole: context.recipientRole,
