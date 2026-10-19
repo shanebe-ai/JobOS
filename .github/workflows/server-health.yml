@@ -1,8 +1,10 @@
 name: Server health
 
-# Read-only health check of the production server (37.27.80.77).
-# Reports load, memory, disk, pm2 processes and local app ports.
-# Fails if any pm2 process is not online, a port does not answer, or disk is over 90%.
+# Read-only health check of the production server.
+# Reports load, memory, disk, pm2 processes and local app ports, plus whether
+# the public site (tmcdonald.ca, 37.27.80.77) answers from outside.
+# Fails if any pm2 process is not online, a port does not answer, disk is over
+# 90%, or the public site is down.
 
 on:
   schedule:
@@ -21,6 +23,10 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             fail=0
+
+            echo "== host"
+            hostname
+            hostname -I
 
             echo "== uptime"
             uptime
@@ -50,10 +56,20 @@ jobs:
             ' || { echo "FAIL: a pm2 process is not online"; fail=1; }
 
             echo "== http (localhost)"
-            for p in 3000 3002 3003 5173 5174; do
+            for p in 3000 3001 3002 3003 5173 5174; do
               code=$(curl -s -o /dev/null -m 10 -w '%{http_code} %{time_total}s' "http://localhost:$p/")
               echo "port $p: $code"
               case "$code" in 000*|5*) echo "FAIL: port $p"; fail=1 ;; esac
             done
 
             exit $fail
+
+      - name: Check public site
+        run: |
+          fail=0
+          for url in https://tmcdonald.ca/; do
+            code=$(curl -s -o /dev/null -m 15 -w '%{http_code} %{time_total}s' "$url")
+            echo "$url: $code"
+            case "$code" in 2*|3*) ;; *) echo "FAIL: $url"; fail=1 ;; esac
+          done
+          exit $fail
