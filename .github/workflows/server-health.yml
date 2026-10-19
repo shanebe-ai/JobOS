@@ -1,0 +1,59 @@
+name: Server health
+
+# Read-only health check of the production server (37.27.80.77).
+# Reports load, memory, disk, pm2 processes and local app ports.
+# Fails if any pm2 process is not online, a port does not answer, or disk is over 90%.
+
+on:
+  schedule:
+    - cron: "30 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            fail=0
+
+            echo "== uptime"
+            uptime
+
+            echo "== memory (MB)"
+            free -m
+
+            echo "== disk"
+            df -h -x tmpfs -x devtmpfs -x overlay
+            used=$(df --output=pcent / | tail -1 | tr -dc '0-9')
+            if [ "$used" -gt 90 ]; then echo "FAIL: root disk ${used}% full"; fail=1; fi
+
+            echo "== pm2"
+            pm2 jlist | node -e '
+              let s = "";
+              process.stdin.on("data", d => (s += d)).on("end", () => {
+                const apps = JSON.parse(s);
+                let bad = 0;
+                for (const a of apps) {
+                  const e = a.pm2_env;
+                  const up = e.status === "online" ? Math.round((Date.now() - e.pm_uptime) / 60000) + "m" : "-";
+                  console.log(`${a.name.padEnd(20)} ${e.status.padEnd(9)} restarts=${e.restart_time} uptime=${up} mem=${Math.round(a.monit.memory / 1048576)}MB cpu=${a.monit.cpu}%`);
+                  if (e.status !== "online") bad = 1;
+                }
+                process.exit(bad);
+              });
+            ' || { echo "FAIL: a pm2 process is not online"; fail=1; }
+
+            echo "== http (localhost)"
+            for p in 3000 3002 3003 5173 5174; do
+              code=$(curl -s -o /dev/null -m 10 -w '%{http_code} %{time_total}s' "http://localhost:$p/")
+              echo "port $p: $code"
+              case "$code" in 000*|5*) echo "FAIL: port $p"; fail=1 ;; esac
+            done
+
+            exit $fail
